@@ -4,6 +4,8 @@ version = "0.6.0"
 authors = ["Bastian Germann"]
 license = "GPL-3.0+"
 repository = "https://github.com/bgermann/offwall"
+documentation = "https://docs.rs/offwall"
+readme = "README.md"
 description = "A simple, CSV-reading OpenFlow controller dedicated to firewall bypassing"
 
 [features]
