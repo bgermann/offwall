@@ -1,0 +1,85 @@
+.TH OFFWALL.INI 4
+.SH NAME
+OFFWall.ini \- The general configuration file for OFFWall
+.SH DESCRIPTION
+The OFFWall.ini file conforms to the informal INI format.
+It is read by OFFWall and expresses its general configuration.
+.PP
+You can write comments in lines beginning with a ; character.
+The file consists of [Sections] of \fIkey\fR=value pairs:
+.PP
+.B [Connection]
+.PP
+If the section is not available it defaults to uri=tcp:127.0.0.1:6633.
+.TP
+.I uri
+Expects an OpenFlow Connection URI which consists of protocol:address:port.
+The protocol part can be tcp or tls (if TLS support is available).
+The address part is an IPv4 or IPv6 address.
+The port part is an optional TCP port and defaults to 6633.
+.TP
+.I pkcs12
+If uri's protocol is tls this has to be the path to a PKCS #12 bundle file with a certificate, its chain of trust, and its private key.
+.TP
+.I passwd
+The password for pkcs12's private key.
+.PP
+.B [Table]
+.PP
+If the section is not available it defaults to id=0.
+.TP
+.I id
+The OpenFlow Table ID where OFFWall stores its flow entries.
+Expects an unsigned 8 bit integer.
+.PP
+.B [Ports]
+.PP
+This section holds four key=value pairs of the same kind.
+The value is an unsigned 32 bit OpenFlow switch port number.
+The key can be one of the following:
+.TP
+.I inside
+Identifies the port to the inside network.
+.TP
+.I fw_in
+Identifies the port to the firewall's connection with the inside network.
+.TP
+.I fw_out
+Identifies the port to the firewall's connection with the outside network.
+.TP
+.I outside
+Identifies the port to the outside network.
+.PP
+.B [Networks]
+.TP
+.I inside
+The inside network's IP range in CIDR notation.
+The OpenFlow matches' inbound and outbound directions are derived from this information.
+.SH EXAMPLES
+.nf
+[Connection]
+uri=tcp:192.0.2.1:6633
+
+; A TLS connection setup:
+; uri=tls:192.0.2.1:6633
+; pkcs12=/etc/offwall.p12
+; passwd=s3cr3t
+
+[Table]
+id=0
+
+[Ports]
+inside=1
+fw_in=2
+fw_out=3
+outside=4
+
+[Networks]
+inside=192.0.2.0/28
+.fi
+.SH FILES
+.TP
+.I /etc/offwall.ini
+The default configuration file with this syntax
+.SH "SEE ALSO"
+.BR offwall (1)

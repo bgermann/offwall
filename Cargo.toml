@@ -1,0 +1,29 @@
+[package]
+name = "offwall"
+version = "0.6.0"
+authors = ["Bastian Germann"]
+license = "GPL-3.0+"
+description = "A simple, CSV-reading OpenFlow controller dedicated to firewall bypassing"
+
+[features]
+tls = ["tls-api-openssl"]
+
+[dependencies]
+byteorder = "1.1"
+notify = "4.0"
+ipnetwork = "0.12"
+log = "0.3"
+log-panics = "1.2"
+simple_logger = "0.4"
+rust-ini = "0.10"
+rand = "0.4"
+tls-api = "0.1"
+tls-api-openssl = { version = "0.1", optional = true }
+
+[dependencies.clap]
+version = "2"
+default-features = false
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+syslog = "3.3.0"

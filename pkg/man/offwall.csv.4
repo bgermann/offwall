@@ -1,0 +1,45 @@
+.TH OFFWALL.CSV 4
+.SH NAME
+offwall.csv \- The bypass rules file for OFFWall
+.SH DESCRIPTION
+The offwall.csv file conforms to the comma-separated values (CSV) format.
+OFFWall is supposed to read a file with this syntax, which expresses the firewall bypass rules that are to be installed as flow entries on a connected OpenFlow switch.
+.PP
+You can write comments in lines beginning with a # character.
+The separation character to be used is the semicolon (;).
+Whitespace surrounding a value is ignored.
+.PP
+Each line has to have exactly five values which are used to match an incoming IPv4 packet.
+The meaning of the values is identified by position:
+.I src_cidr; src_port; dst_cidr; dst_port; proto
+.TP
+.I src_cidr
+An IPv4 address range in CIDR notation that is matched against the source address.
+.TP
+.I src_port
+An unsigned 16 bit integer that is matched against the TCP or UDP source port.
+If proto is ICMP this has to be a wildcard.
+.TP
+.I dst_cidr
+An IPv4 address range in CIDR notation that is matched against the destination address.
+.TP
+.I dst_port
+An unsigned 16 bit integer that is matched against the TCP or UDP destination port.
+If proto is ICMP this has to be a wildcard.
+.TP
+.I proto
+May be one of TCP, UDP, or ICMP.
+.PP
+Any field may be a wildcard (*), but at least one has to have a value.
+A wildcard means exclusion from the match.
+If an IPv4 packet matches all fields it bypasses the firewall in both inbound and outbound directions.
+.SH EXAMPLES
+.nf
+# src_cidr; src_port; dst_cidr; dst_port; proto
+192.0.2.0/24    ;   *; 192.0.2.10/32;  80; TCP
+192.0.2.0/24    ;  25; 192.0.2.0/30 ;  25; TCP
+203.0.113.102/32; 137; 192.0.2.15/32;   *; UDP
+203.0.113.102/32;   *; 192.0.2.15/32;   *; ICMP
+.fi
+.SH "SEE ALSO"
+.BR OFFWall (1)

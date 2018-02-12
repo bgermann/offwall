@@ -1,0 +1,28 @@
+i pkginfo
+i depend
+i copyright=../LICENSE.md
+!default 0755 root sys
+d none /etc
+d none /opt
+d none /usr
+d none /usr/share
+d none /var
+d none /var/svc
+d none /var/svc/manifest
+d none /var/svc/manifest/application
+!default 0755 root bin
+d none /lib
+d none /lib/svc
+d none /lib/svc/method
+d none /usr/share/man
+d none /usr/share/man/man1
+d none /usr/share/man/man4
+f none /opt/offwall=../target/sparcv9-sun-solaris/release/offwall
+!default 0644 root bin
+f none /usr/share/man/man1/offwall.1=man/offwall.1
+f none /usr/share/man/man4/offwall.csv.4=man/offwall.csv.4
+f none /usr/share/man/man4/offwall.ini.4=man/offwall.ini.4
+f preserve /etc/offwall.csv=etc/offwall.csv
+f preserve /etc/offwall.ini=etc/offwall.ini
+f none /lib/svc/method/offwall=svc/offwall.sh 0555 root bin
+f manifest /var/svc/manifest/application/offwall.xml=svc/offwall.xml 0444 root sys

@@ -1,0 +1,3 @@
+# Please read offwall.csv(4) on how to add firewall
+# bypass rules line by line with the following 5 values:
+# src_cidr; src_port; dst_cidr; dst_port; proto
