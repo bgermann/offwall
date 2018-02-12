@@ -13,7 +13,7 @@ If you want to enable TLS, please use the `--features tls` option appended to th
 ## Prerequisites for cross compilation
 
 The production target system for OFFWall is Solaris 10 (SPARC64).
-A compatible cross linker is required to build, which is provided by the `cross` crate.
+A compatible cross linker is required to build, which is provided by the [cross crate](https://crates.io/crates/cross).
 It also includes an OpenSSL installation, so you do not have to care about installing it.
 
 You should use a x86_64 GNU/Linux build system with cross.
@@ -25,7 +25,8 @@ cross is installed via `cargo install cross`.
 ## Packaging for Solaris 10
 
 It is assumed that you have cross installed and the docker daemon is running.
-The Heirloom Packaging Tools and a make implementation are also required.
+[The Heirloom Packaging Tools}(http://heirloom.sourceforge.net/pkgtools.html)
+and a make implementation are also required.
 At least make, pkgmk, rustup, docker and cross have to be in $PATH.
 Build the Solaris 10 SVR4 package by simply running `make`.
 You will find the package at the new directory offwall.
@@ -33,7 +34,9 @@ You can `make offwall.pkg` a container with pkgtrans available.
 
 ## Installing on Solaris 10
 
-You can install the package with pkgadd. Maybe you get a checksum error,
+You can download Solaris SVR4 packages from
+[GitHub Releases](https://github.com/bgermann/offwall/releases) and install them with pkgadd.
+If you build the package yourself, possibly you get a checksum error
 because the upstream Heirloom Packaging Tools depend on a long's size
 being 32 bit for computing the checksums. You should install a 32-bit version.
 If that is not possible, pkgadd has an undocumented -C flag to deactivate checksum checks.
