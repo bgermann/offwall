@@ -7,6 +7,12 @@ if [ -z $SMF_FMRI ]; then
   exit $SMF_EXIT_ERR
 fi
 
+INI=`svcprop -p offwall/ini $SMF_FMRI`
+if [ -z $INI ]; then
+  echo "offwall/ini property not set"
+  exit $SMF_EXIT_ERR_CONFIG
+fi
+
 PIDFILE=`svcprop -p offwall/pidfile $SMF_FMRI`
 if [ -z $PIDFILE ]; then
   echo "offwall/pidfile property not set"
@@ -37,7 +43,7 @@ fi
 
 case "$1" in
 'start')
-  LD_LIBRARY_PATH=/opt/csw/lib/64 /opt/offwall -p $PIDFILE -s $LOGV $CSV
+  LD_LIBRARY_PATH=/opt/csw/lib/64 /opt/offwall -c $INI -p $PIDFILE -s $LOGV $CSV
   while [ ! -f "$PIDFILE" ]; do
     sleep 1
   done

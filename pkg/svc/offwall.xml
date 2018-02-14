@@ -20,6 +20,7 @@
   <exec_method type='method' name='stop' exec='/lib/svc/method/offwall stop' timeout_seconds='300' />
   <property_group name='offwall' type='application'>
     <propval name='pidfile' type='astring' value='/tmp/offwall.pid' />
+    <propval name='ini' type='astring' value='/etc/offwall.ini' />
     <propval name='csv' type='astring' value='/etc/offwall.csv' />
     <propval name='loglevel' type='count' value='0' />
   </property_group>

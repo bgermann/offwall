@@ -54,7 +54,6 @@ use std::sync::mpsc::{Sender, Receiver};
 use std::thread;
 use std::time::Duration;
 
-const DEFAULT_CONFIG_PATH: &str = "/etc/offwall.ini";
 const NOTIFY_SECONDS: u64 = 2;
 
 /// Registers a file as notify target.
@@ -115,9 +114,9 @@ fn handle_cli_args() -> io::Result<()> {
 
     let usage = &format!(
         "{}-v...          'Repeat to set the level of verbosity'
-        -c, --conf [ini]  'The INI configuration file. Default: {}'
+        -c, --conf <ini>  'The INI configuration file.'
         <csv>             'The CSV file with firewall bypass rules'"
-    , unix_opts, DEFAULT_CONFIG_PATH);
+    , unix_opts);
     let matches = app_from_crate!().args_from_usage(usage).get_matches();
 
     let log_lvl = match matches.occurrences_of("v") {
@@ -139,7 +138,7 @@ fn handle_cli_args() -> io::Result<()> {
     }
 
     let csv_path = matches.value_of("csv").expect("required csv argument").to_string();
-    let conf_path = matches.value_of("conf").unwrap_or(DEFAULT_CONFIG_PATH);
+    let conf_path = matches.value_of("conf").unwrap();
 
     let (conn, table, ports, inside_net) = conf::parse_file(conf_path)?;
     let csv_parser = CsvParser::new(csv_path, inside_net);
