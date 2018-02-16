@@ -68,7 +68,7 @@ fn register_bypass_file(parser: &CsvParser, record_tx: &Sender<HashSet<BypassRec
             {
                 info!("Watching file {}", parser.path());
                 match handle_file_events(&rx, parser, record_tx) {
-                    Ok(_) => warn!("notify watch removed"),
+                    Ok(_) => warn!("file watch removed"),
                     Err(e) => error!("{}", e),
                 }
             }
@@ -77,7 +77,7 @@ fn register_bypass_file(parser: &CsvParser, record_tx: &Sender<HashSet<BypassRec
 }
 
 /// Reads inode events and parses the corresponding file.
-/// If the inode is (re)moved, it is unregistered from notify.
+/// If the inode is removed, it is unregistered from notify.
 fn handle_file_events(
     rx: &Receiver<DebouncedEvent>,
     parser: &CsvParser,
@@ -101,19 +101,21 @@ fn handle_file_events(
     }
 }
 
-/// Reads command line arguments and calls the corresponding functions.
+/// Reads command line arguments and sets the program up as intended.
+/// Spawns a new thread to watch the bypass file.
+/// Finally runs an OfController infinitely.
 fn handle_cli_args() -> io::Result<()> {
     #[cfg(unix)]
-    let unix_opts = "-p, --pid [file] 'Daemonizes the process and writes a PID file'
+    let unix_opts = "
         -s, --syslog      'Logs via syslog'
-        ";
+        -p, --pid [file]  'Daemonizes the process and writes a PID file'";
     #[cfg(not(unix))]
     let unix_opts = "";
 
     let usage = &format!(
-        "{}-v...          'Repeat to set the level of verbosity'
-        -c, --conf <ini>  'The INI configuration file.'
-        <csv>             'The CSV file with firewall bypass rules'",
+        "-v...            'Repeat to set the level of verbosity'
+        -c, --conf <ini>  'The INI configuration file'
+        <csv>             'The CSV file with firewall bypass rules'{}",
         unix_opts
     );
     let matches = app_from_crate!().args_from_usage(usage).get_matches();
@@ -140,12 +142,15 @@ fn handle_cli_args() -> io::Result<()> {
 
     let csv_path = matches
         .value_of("csv")
-        .expect("required csv argument")
+        .expect("csv argument missing")
         .to_string();
     let conf_path = matches.value_of("conf").unwrap();
 
     let (conn, table, ports, inside_net) = conf::parse_file(conf_path)?;
     let csv_parser = CsvParser::new(csv_path, inside_net);
+
+    // first file read that terminates the program on errors
+    let records = RefCell::new(csv_parser.parse_file()?);
 
     #[cfg(unix)]
     {
@@ -163,9 +168,6 @@ fn handle_cli_args() -> io::Result<()> {
             write!(file, "{}", pid)?;
         }
     }
-
-    // first file read that terminates the program on errors
-    let records = RefCell::new(csv_parser.parse_file()?);
 
     let listen_socket = net::TcpListener::bind(conn.socket())?;
     info!("Listening on {}", listen_socket.local_addr()?);
