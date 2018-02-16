@@ -22,7 +22,7 @@ The IP Protocol (proto) value can be TCP, UDP or `*`.
 If it is `*`, the port numbers also have to be `*`.
 */
 
-use ipnetwork::{Ipv4Network, IpNetworkError};
+use ipnetwork::{IpNetworkError, Ipv4Network};
 
 use std::collections::HashSet;
 use std::convert::From;
@@ -144,7 +144,8 @@ impl BypassRecord {
 }
 
 fn parse_port_number(ps: &str) -> Result<u16, Error> {
-    ps.parse().map_err(|_| Error::InvalidPortNumber(ps.to_string()))
+    ps.parse()
+        .map_err(|_| Error::InvalidPortNumber(ps.to_string()))
 }
 
 fn parse_protocol(ps: &str) -> Result<IpProtocol, Error> {
@@ -163,7 +164,7 @@ pub struct CsvParser {
 
 impl CsvParser {
     pub fn new(path: String, inside_net: Ipv4Network) -> CsvParser {
-        CsvParser{
+        CsvParser {
             path: path,
             inside_net: inside_net,
         }
@@ -215,15 +216,17 @@ impl CsvParser {
         };
 
         let src_ip = match csv_elems[0] {
-            Some(ip) => Some(Ipv4Network::from_str(ip).map_err(
-                |e| Error::InvalidCidr(e, line.to_string())
-            )?),
+            Some(ip) => {
+                let invalid_cidr = |e| Error::InvalidCidr(e, line.to_string());
+                Some(Ipv4Network::from_str(ip).map_err(invalid_cidr)?)
+            }
             _ => None,
         };
         let dst_ip = match csv_elems[2] {
-            Some(ip) => Some(Ipv4Network::from_str(ip).map_err(
-                |e| Error::InvalidCidr(e, line.to_string())
-            )?),
+            Some(ip) => {
+                let invalid_cidr = |e| Error::InvalidCidr(e, line.to_string());
+                Some(Ipv4Network::from_str(ip).map_err(invalid_cidr)?)
+            }
             _ => None,
         };
 
@@ -233,8 +236,8 @@ impl CsvParser {
         };
 
         // check for semantic errors
-        if src_ip == None && src_port == None &&
-        dst_ip == None && dst_port == None && proto == None {
+        if src_ip == None && src_port == None && dst_ip == None && dst_port == None && proto == None
+        {
             return Err(Error::OnlyWildcards(line.to_string()));
         }
         if (src_port != None || dst_port != None) && proto == None {
@@ -245,9 +248,11 @@ impl CsvParser {
         }
         let direction = if self.in_inside_net(src_ip) {
             Direction::Outside
-        } else if self.in_inside_net(dst_ip) {
+        }
+        else if self.in_inside_net(dst_ip) {
             Direction::Inside
-        } else {
+        }
+        else {
             return Err(Error::NotMatchingInsideNet(line.to_string()));
         };
 
@@ -269,12 +274,11 @@ impl CsvParser {
 
     /// Parses a CSV file and returns its records
     pub fn parse_file(&self) -> io::Result<HashSet<BypassRecord>> {
-
         info!("Reading CSV file {}", self.path);
 
-        let file = File::open(&self.path).map_err(|e|
+        let file = File::open(&self.path).map_err(|e| {
             io::Error::new(e.kind(), format!("Unable to open `{:?}`: {}", self.path, e))
-        )?;
+        })?;
         let reader = io::BufReader::new(file);
 
         let mut bypass_records = HashSet::new();
@@ -289,5 +293,4 @@ impl CsvParser {
 
         Ok(bypass_records)
     }
-
 }

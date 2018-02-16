@@ -10,26 +10,26 @@ To spawn an instance with 4 ports you can run:
 ```
 */
 
+extern crate byteorder;
 #[macro_use]
 extern crate clap;
+extern crate ini;
+extern crate ipnetwork;
 #[macro_use]
 extern crate log;
 extern crate log_panics;
-extern crate simple_logger;
-extern crate byteorder;
-extern crate ini;
 extern crate notify;
-extern crate ipnetwork;
 extern crate rand;
+extern crate simple_logger;
 
 extern crate tls_api;
 #[cfg(feature = "tls")]
 extern crate tls_api_openssl;
 
 #[cfg(unix)]
-extern crate syslog;
-#[cfg(unix)]
 extern crate libc;
+#[cfg(unix)]
+extern crate syslog;
 
 mod bypass_csv;
 mod openflow;
@@ -38,7 +38,7 @@ mod conf;
 use bypass_csv::BypassRecord;
 use bypass_csv::CsvParser;
 
-use notify::{Watcher, RecursiveMode, DebouncedEvent};
+use notify::{DebouncedEvent, RecursiveMode, Watcher};
 
 use openflow::OfController;
 
@@ -50,7 +50,7 @@ use std::io::prelude::*;
 use std::net;
 use std::process::exit;
 use std::sync::mpsc;
-use std::sync::mpsc::{Sender, Receiver};
+use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::time::Duration;
 
@@ -62,7 +62,10 @@ fn register_bypass_file(parser: &CsvParser, record_tx: &Sender<HashSet<BypassRec
     loop {
         let (tx, rx) = mpsc::channel();
         if let Ok(mut watcher) = notify::watcher(tx, Duration::from_secs(NOTIFY_SECONDS)) {
-            if watcher.watch(&parser.path, RecursiveMode::NonRecursive).is_ok() {
+            if watcher
+                .watch(&parser.path, RecursiveMode::NonRecursive)
+                .is_ok()
+            {
                 info!("Watching file {}", parser.path);
                 match handle_file_events(&rx, parser, record_tx) {
                     Ok(_) => warn!("notify watch removed"),
@@ -75,8 +78,6 @@ fn register_bypass_file(parser: &CsvParser, record_tx: &Sender<HashSet<BypassRec
 
 /// Reads inode events and parses the corresponding file.
 /// If the inode is (re)moved, it is unregistered from notify.
-/// On unregistering, which can also be caused by deleting,
-/// unmounting etc., the causing event's mask is returned.
 fn handle_file_events(
     rx: &Receiver<DebouncedEvent>,
     parser: &CsvParser,
@@ -90,14 +91,12 @@ fn handle_file_events(
             DebouncedEvent::Error(error, _) => {
                 return Err(error);
             }
-            _ => {
-                match parser.parse_file() {
-                    Ok(recs) => tx.send(recs).expect("inter-thread communication failed"),
-                    Err(io_err) => {
-                        return Err(notify::Error::Io(io_err));
-                    }
+            _ => match parser.parse_file() {
+                Ok(recs) => tx.send(recs).expect("inter-thread communication failed"),
+                Err(io_err) => {
+                    return Err(notify::Error::Io(io_err));
                 }
-            }
+            },
         }
     }
 }
@@ -105,8 +104,7 @@ fn handle_file_events(
 /// Reads command line arguments and calls the corresponding functions.
 fn handle_cli_args() -> io::Result<()> {
     #[cfg(unix)]
-    let unix_opts =
-        "-p, --pid [file] 'Daemonizes the process and writes a PID file'
+    let unix_opts = "-p, --pid [file] 'Daemonizes the process and writes a PID file'
         -s, --syslog      'Logs via syslog'
         ";
     #[cfg(not(unix))]
@@ -115,8 +113,9 @@ fn handle_cli_args() -> io::Result<()> {
     let usage = &format!(
         "{}-v...          'Repeat to set the level of verbosity'
         -c, --conf <ini>  'The INI configuration file.'
-        <csv>             'The CSV file with firewall bypass rules'"
-    , unix_opts);
+        <csv>             'The CSV file with firewall bypass rules'",
+        unix_opts
+    );
     let matches = app_from_crate!().args_from_usage(usage).get_matches();
 
     let log_lvl = match matches.occurrences_of("v") {
@@ -131,24 +130,31 @@ fn handle_cli_args() -> io::Result<()> {
         let app_name = Some(crate_name!());
         let filter = log_lvl.to_log_level_filter();
         #[cfg(unix)]
-        syslog::init(syslog::Facility::LOG_USER, filter, app_name).expect("error on logging initialization");
+        syslog::init(syslog::Facility::LOG_USER, filter, app_name)
+            .expect("error on logging initialization");
         log_panics::init();
-    } else {
+    }
+    else {
         simple_logger::init_with_level(log_lvl).expect("error on logging initialization");
     }
 
-    let csv_path = matches.value_of("csv").expect("required csv argument").to_string();
+    let csv_path = matches
+        .value_of("csv")
+        .expect("required csv argument")
+        .to_string();
     let conf_path = matches.value_of("conf").unwrap();
 
     let (conn, table, ports, inside_net) = conf::parse_file(conf_path)?;
     let csv_parser = CsvParser::new(csv_path, inside_net);
 
-    #[cfg(unix)] {
+    #[cfg(unix)]
+    {
         if matches.is_present("pid") {
             let pid = unsafe { libc::fork() };
             if pid < 0 {
                 return Err(io::Error::last_os_error());
-            } else if pid > 0 {
+            }
+            else if pid > 0 {
                 // exit the parent process
                 exit(0);
             }
@@ -166,7 +172,7 @@ fn handle_cli_args() -> io::Result<()> {
 
     let (tx, rx) = mpsc::channel();
     thread::spawn(move || register_bypass_file(&csv_parser, &tx));
-    
+
     loop {
         if let Err(e) = OfController::run(&rx, &listen_socket, &conn, &table, &ports, &records) {
             error!("retry connection on error: {}", e);

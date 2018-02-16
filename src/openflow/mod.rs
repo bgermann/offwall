@@ -25,7 +25,7 @@ use std::collections::HashSet;
 use std::io;
 use std::io::{Read, Write};
 use std::ops::Sub;
-use std::net::{TcpStream, TcpListener};
+use std::net::{TcpListener, TcpStream};
 use std::sync::mpsc::{Receiver, TryRecvError};
 use std::time::{Duration, Instant};
 
@@ -47,17 +47,16 @@ enum Stream {
 }
 impl Stream {
     fn from(connection: &OfConnection, stream: TcpStream) -> tls_api::Result<Stream> {
-        #[cfg(feature = "tls")] {
+        #[cfg(feature = "tls")]
+        {
             if let Some(acc) = connection.tls_acceptor()? {
                 return match acc.accept(stream) {
                     Ok(s) => Ok(Stream::Tls(s)),
-                    Err(tls_api::HandshakeError::Failure(e)) => {
-                        Err(e)
-                    }
+                    Err(tls_api::HandshakeError::Failure(e)) => Err(e),
                     Err(tls_api::HandshakeError::Interrupted(_)) => {
                         Err(tls_api::Error::new_other("TLS stream was interrupted"))
                     }
-                }
+                };
             }
         }
         Ok(Stream::Tcp(stream))
@@ -98,14 +97,13 @@ pub struct OfController<'a> {
 }
 
 impl<'a> OfController<'a> {
-
     fn send_flow_mod(
         &mut self,
         cmd: OfpFlowModCommand,
         mut match_field: OfpMatch,
         input_port: &OfPort,
         output_port: &OfPort,
-        prio: u16
+        prio: u16,
     ) -> io::Result<()> {
         let in_tlv = OfpOxmTlv::new_in_port(input_port.of_port);
         match_field.add_tlv(in_tlv);
@@ -113,7 +111,14 @@ impl<'a> OfController<'a> {
         let output = OfpActionOutput::new(output_port.of_port);
         let instr = vec![OfpInstructionActions::new(vec![output])];
 
-        let flow_mod = OfpFlowMod::new(cmd, self.table.id, prio, output_port.of_port, match_field, instr);
+        let flow_mod = OfpFlowMod::new(
+            cmd,
+            self.table.id,
+            prio,
+            output_port.of_port,
+            match_field,
+            instr,
+        );
 
         trace!("Outgoing message: {:?}", flow_mod);
         flow_mod.serialize(&mut self.stream, gen_xid())
@@ -132,7 +137,7 @@ impl<'a> OfController<'a> {
     fn send_bypass_flow_mods(
         &mut self,
         cmd: OfpFlowModCommand,
-        records: &HashSet<BypassRecord>
+        records: &HashSet<BypassRecord>,
     ) -> io::Result<()> {
         for rec in records {
             let mat = OfpMatch::from(rec);
@@ -166,13 +171,18 @@ impl<'a> OfController<'a> {
         else if t == OfpType::EchoRequest as u8 {
             // The EchoReply takes the same body byte stream as the EchoRequest
             let req = OfpEchoRequest::deserialize(buf)?;
-            let rep = OfpEchoReply{arbitrary: req.arbitrary};
+            let rep = OfpEchoReply {
+                arbitrary: req.arbitrary,
+            };
             rep.serialize(&mut self.stream, header.xid)?;
         }
         else if t == OfpType::FeaturesReply as u8 {
             let features = OfpSwitchFeatures::deserialize(buf)?;
             let datapath_id = features.datapath_id;
-            info!("The connected switch identified itself with datapath id {}", datapath_id);
+            info!(
+                "The connected switch identified itself with datapath id {}",
+                datapath_id
+            );
 
             // unsubscribe from all messages
             let async_conf = OfpAsyncConfig::default();
@@ -192,16 +202,19 @@ impl<'a> OfController<'a> {
             if error.check_table_full() {
                 error!(
                     "Table 0 does not have enough free memory for a new Flow. {} {}",
-                    "The implementation could be changed to allow for using more tables.",
-                    error
+                    "The implementation could be changed to allow for using more tables.", error
                 );
-            } else {
+            }
+            else {
                 error!("Unexpected {}", error);
                 debug!("Full error message: {:?}", error);
             }
         }
         else {
-            debug!("Cannot interpret message of type {}. Full message body: {:?}", header.typ, buf);
+            debug!(
+                "Cannot interpret message of type {}. Full message body: {:?}",
+                header.typ, buf
+            );
             return Err(Error::BadRequest(OfpBadRequestCode::BadType, buf));
         }
         Ok(())
@@ -213,7 +226,6 @@ impl<'a> OfController<'a> {
     fn handle_bypass_records(&mut self) -> io::Result<()> {
         match self.rx.try_recv() {
             Ok(new_records) => {
-
                 let del_set = self.records.borrow().sub(&new_records);
                 self.send_bypass_flow_mods(OfpFlowModCommand::DeleteStrict, &del_set)?;
                 for to_delete in del_set {
@@ -238,19 +250,24 @@ impl<'a> OfController<'a> {
         Ok(())
     }
 
-    fn handle_of_errors(&mut self, error: Error, header: &OfpHeader, header_buf: &[u8]) -> io::Result<()> {
+    fn handle_of_errors(
+        &mut self,
+        error: Error,
+        header: &OfpHeader,
+        header_buf: &[u8],
+    ) -> io::Result<()> {
         let err_msg = match error {
             Error::Io(e) => return Err(e),
             Error::HelloFailed => {
-                let msg = format!("The connected switch supports only OpenFlow protocol version {:x}", header.version);
+                let msg = format!(
+                    "The connected switch supports only OpenFlow protocol version {:x}",
+                    header.version
+                );
                 let err = OfpErrorMsg::new_hello_failed();
                 err.serialize(&mut self.stream, header.xid)?;
                 return Err(io::Error::new(io::ErrorKind::BrokenPipe, msg));
             }
-            Error::BadRequest(code, buf) => {
-                OfpErrorMsg::new_bad_request(code, header_buf, &buf)
-            }
-            
+            Error::BadRequest(code, buf) => OfpErrorMsg::new_bad_request(code, header_buf, &buf),
         };
         debug!("Outgoing error message: {:?}", err_msg);
         err_msg.serialize(&mut self.stream, header.xid)
@@ -268,7 +285,6 @@ impl<'a> OfController<'a> {
         ports: &Ports,
         records: &RefCell<HashSet<BypassRecord>>,
     ) -> tls_api::Result<()> {
-
         let (stream, addr) = listener.accept()?;
         info!("connection from {}", addr);
 

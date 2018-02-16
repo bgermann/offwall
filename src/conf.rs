@@ -31,7 +31,7 @@ use openflow::messages::OFPP_MAX;
 use ini::Ini;
 use ini::ini;
 
-use ipnetwork::{Ipv4Network, IpNetworkError};
+use ipnetwork::{IpNetworkError, Ipv4Network};
 
 use std::convert::From;
 use std::default::Default;
@@ -84,33 +84,23 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::Io(ref e) => {
-                write!(f, "{}", e)
-            }
-            Error::Ini(ref e) => {
-                write!(f, "{}", e)
-            }
+            Error::Io(ref e) => write!(f, "{}", e),
+            Error::Ini(ref e) => write!(f, "{}", e),
             Error::ParseTableId(ref e) => {
                 write!(f, "Error on trying to parse the OpenFlow Table ID: {}", e)
             }
             Error::ParseSwitchPort(ref e) => {
                 write!(f, "Error on trying to parse a switch port number: {}", e)
             }
-            Error::InvalidSwitchPortNo(ref p) => {
-                write!(f, "Switch port number {} is invalid", p)
-            }
+            Error::InvalidSwitchPortNo(ref p) => write!(f, "Switch port number {} is invalid", p),
             Error::InvalidCidr(ref e, ref s) => {
                 write!(f, "Error on trying to parse '{}' as IP CIDR: {}", s, e)
             }
-            Error::MissingSection(s) => {
-                write!(f, "The INI file does not have a [{}] section", s)
-            }
+            Error::MissingSection(s) => write!(f, "The INI file does not have a [{}] section", s),
             Error::MissingEntry(s, k) => {
                 write!(f, "The INI [{}] section does not have a '{}' key", s, k)
             }
-            Error::InvalidUri => {
-                write!(f, "The OpenFlow Connection URI from INI file is invalid")
-            }
+            Error::InvalidUri => write!(f, "The OpenFlow Connection URI from INI file is invalid"),
         }
     }
 }
@@ -193,14 +183,12 @@ pub struct OfConnection {
 }
 #[cfg(feature = "tls")]
 impl OfConnection {
-    pub fn tls_acceptor (&self) -> tls_api::Result<Option<tls_api_openssl::TlsAcceptor>> {
+    pub fn tls_acceptor(&self) -> tls_api::Result<Option<tls_api_openssl::TlsAcceptor>> {
         Ok(match self.pkcs12 {
-            Some(ref p12) => Some(
-                tls_api_openssl::TlsAcceptorBuilder::from_pkcs12(
-                    &p12.0, &p12.1
-                )?.build()?
-            ),
-            _ => None
+            Some(ref p12) => {
+                Some(tls_api_openssl::TlsAcceptorBuilder::from_pkcs12(&p12.0, &p12.1)?.build()?)
+            }
+            _ => None,
         })
     }
 }
@@ -212,24 +200,28 @@ impl Section for OfConnection {
 
         match conf.section(Some(CONN_SECTION.to_owned())) {
             Some(conn_section) => {
-                let uri = conn_section.get(URI_KEY)
+                let uri = conn_section
+                    .get(URI_KEY)
                     .ok_or(Error::MissingEntry(CONN_SECTION, URI_KEY))?;
                 let mut conn = OfConnection::from_str(uri)?;
 
-                #[cfg(feature = "tls")] {
+                #[cfg(feature = "tls")]
+                {
                     if conn.proto == ConnectionProtocol::Tls {
-                        let path = conn_section.get(P12_KEY)
+                        let path = conn_section
+                            .get(P12_KEY)
                             .ok_or(Error::MissingEntry(CONN_SECTION, P12_KEY))?;
                         let mut p12 = vec![];
                         File::open(path)?.read_to_end(&mut p12)?;
-                        let passwd = conn_section.get(PASS_KEY)
+                        let passwd = conn_section
+                            .get(PASS_KEY)
                             .ok_or(Error::MissingEntry(CONN_SECTION, PASS_KEY))?;
                         conn.pkcs12 = Some((p12, passwd.to_owned()));
                     }
                 }
                 Ok(conn)
             }
-            _ => Ok(OfConnection::default())
+            _ => Ok(OfConnection::default()),
         }
     }
 }
@@ -246,7 +238,7 @@ impl FromStr for OfConnection {
         if conn_split.len() == 3 {
             let joined = &format!("{}:{}", conn_split[1], conn_split[2]);
             if let Ok(socket) = SocketAddr::from_str(joined) {
-                let connection = OfConnection{
+                let connection = OfConnection {
                     proto: ConnectionProtocol::from_str(conn_split[0])?,
                     socket: socket,
                     pkcs12: None,
@@ -261,7 +253,7 @@ impl FromStr for OfConnection {
 
 impl Default for OfConnection {
     fn default() -> Self {
-        let socket_v4 = SocketAddrV4::new(Ipv4Addr::new(127,0,0,1), OFP_TCP_PORT);
+        let socket_v4 = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), OFP_TCP_PORT);
         OfConnection {
             proto: ConnectionProtocol::Tcp,
             socket: SocketAddr::V4(socket_v4),
@@ -279,9 +271,7 @@ impl FromStr for OfPort {
             return Err(Error::InvalidSwitchPortNo(port_no.to_string()));
         }
 
-        Ok(OfPort {
-            of_port: port_no,
-        })
+        Ok(OfPort { of_port: port_no })
     }
 }
 
@@ -294,13 +284,17 @@ impl Section for Ports {
         let ports_section = conf.section(Some(PORTS_SECTION.to_owned()))
             .ok_or(Error::MissingSection(PORTS_SECTION))?;
 
-        let inside = ports_section.get(INSIDE_KEY)
+        let inside = ports_section
+            .get(INSIDE_KEY)
             .ok_or(Error::MissingEntry(PORTS_SECTION, INSIDE_KEY))?;
-        let fw_in = ports_section.get(FW_IN_KEY)
+        let fw_in = ports_section
+            .get(FW_IN_KEY)
             .ok_or(Error::MissingEntry(PORTS_SECTION, FW_IN_KEY))?;
-        let fw_out = ports_section.get(FW_OUT_KEY)
+        let fw_out = ports_section
+            .get(FW_OUT_KEY)
             .ok_or(Error::MissingEntry(PORTS_SECTION, FW_OUT_KEY))?;
-        let outside = ports_section.get(OUTSIDE_KEY)
+        let outside = ports_section
+            .get(OUTSIDE_KEY)
             .ok_or(Error::MissingEntry(PORTS_SECTION, OUTSIDE_KEY))?;
 
         // the port values are trimmed, so try to parse directly
@@ -320,7 +314,7 @@ impl Ports {
     pub fn in_out_from_direction(&self, dir: Direction) -> (&OfPort, &OfPort) {
         match dir {
             Direction::Inside => (&self.outside, &self.inside),
-            Direction::Outside => (&self.inside, &self.outside)
+            Direction::Outside => (&self.inside, &self.outside),
         }
     }
 }
@@ -344,12 +338,12 @@ impl Section for Ipv4Network {
         let net_section = conf.section(Some(NET_SECTION.to_owned()))
             .ok_or(Error::MissingSection(NET_SECTION))?;
 
-        let inside = net_section.get(INSIDE_KEY)
+        let inside = net_section
+            .get(INSIDE_KEY)
             .ok_or(Error::MissingEntry(NET_SECTION, INSIDE_KEY))?;
 
-        let net = Ipv4Network::from_str(inside).map_err(
-            |e| Error::InvalidCidr(e, inside.to_string())
-        )?;
+        let net =
+            Ipv4Network::from_str(inside).map_err(|e| Error::InvalidCidr(e, inside.to_string()))?;
 
         debug!("Got {:?}", net);
         Ok(net)
@@ -364,15 +358,16 @@ impl Section for OfTable {
 
         let table = match conf.section(Some(TABLE_SECTION.to_owned())) {
             Some(table_section) => {
-                let id = table_section.get(ID_KEY)
+                let id = table_section
+                    .get(ID_KEY)
                     .ok_or(Error::MissingEntry(TABLE_SECTION, ID_KEY))?;
 
                 Ok(OfTable {
-                    id: id.parse().map_err(Error::ParseTableId)?
+                    id: id.parse().map_err(Error::ParseTableId)?,
                 })
             }
 
-            _ => Ok(OfTable::default())
+            _ => Ok(OfTable::default()),
         };
 
         debug!("Got {:?}", table);
@@ -382,9 +377,7 @@ impl Section for OfTable {
 
 impl Default for OfTable {
     fn default() -> Self {
-        OfTable {
-            id: 0,
-        }
+        OfTable { id: 0 }
     }
 }
 
@@ -402,6 +395,6 @@ pub fn parse_file(path: &str) -> Result<(OfConnection, OfTable, Ports, Ipv4Netwo
         OfConnection::from_ini(&conf)?,
         OfTable::from_ini(&conf)?,
         Ports::from_ini(&conf)?,
-        Ipv4Network::from_ini(&conf)?
+        Ipv4Network::from_ini(&conf)?,
     ))
 }

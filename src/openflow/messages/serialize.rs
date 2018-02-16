@@ -8,7 +8,7 @@ use std::mem::size_of;
 
 impl OfpHeader {
     pub fn new(typ: OfpType, xid: u32) -> OfpHeader {
-        OfpHeader{
+        OfpHeader {
             version: OFP_VERSION,
             typ: typ as u8,
             length: OfpHeader::header_length() as u16,
@@ -58,7 +58,7 @@ impl OfpMatch {
     /// Padding of OfpMatch
     fn pad_len(&self) -> usize {
         let len = self.length();
-        (len + 7)/8*8 - len
+        (len + 7) / 8 * 8 - len
     }
 
     pub fn serialize<S: Write>(&self, stream: &mut S) -> io::Result<()> {
@@ -109,8 +109,9 @@ impl OfpOxmTlv {
 
     pub fn serialize<S: Write>(&self, stream: &mut S) -> io::Result<()> {
         let class = self.class as u32;
-        let hasmask_u32 = if self.hasmask {1} else {0};
-        let header = ((class) << 16) | ((self.field as u32) << 9) | (hasmask_u32 << 8) | self.body.len() as u32;
+        let hasmask_u32 = if self.hasmask { 1 } else { 0 };
+        let header = ((class) << 16) | ((self.field as u32) << 9) | (hasmask_u32 << 8)
+            | self.body.len() as u32;
         stream.write_u32::<NetworkEndian>(header)?;
         stream.write_all(&self.body)
     }
@@ -140,7 +141,7 @@ impl OfpInstructionActions {
     pub fn new(actions: Vec<OfpActionOutput>) -> OfpInstructionActions {
         OfpInstructionActions {
             typ: OfpInstructionType::ApplyActions as u16,
-            pad: [0;4],
+            pad: [0; 4],
             actions: actions,
         }
     }
@@ -164,7 +165,7 @@ impl OfpFlowMod {
         priority: u16,
         out_port: u32,
         match_field: OfpMatch,
-        instructions: Vec<OfpInstructionActions>
+        instructions: Vec<OfpInstructionActions>,
     ) -> OfpFlowMod {
         OfpFlowMod {
             cookie: 0,
@@ -212,7 +213,6 @@ pub trait OfpPacket {
 }
 
 impl OfpPacket for OfpEchoReply {
-
     fn typ() -> OfpType {
         OfpType::EchoReply
     }
@@ -223,7 +223,6 @@ impl OfpPacket for OfpEchoReply {
 }
 
 impl OfpPacket for OfpErrorMsg {
-
     fn typ() -> OfpType {
         OfpType::Error
     }
@@ -236,7 +235,6 @@ impl OfpPacket for OfpErrorMsg {
 }
 
 impl OfpPacket for OfpFlowMod {
-
     fn typ() -> OfpType {
         OfpType::FlowMod
     }
@@ -262,7 +260,6 @@ impl OfpPacket for OfpFlowMod {
 }
 
 impl OfpPacket for OfpAsyncConfig {
-
     fn typ() -> OfpType {
         OfpType::SetAsync
     }
@@ -284,20 +281,25 @@ mod tests {
     #[test]
     fn echo_reply_header() {
         let xid = 42;
-        let expected = OfpHeader{
-            version: 4, typ: 3, length: 8, xid: xid
+        let expected = OfpHeader {
+            version: 4,
+            typ: 3,
+            length: 8,
+            xid: xid,
         };
-        let testee = OfpEchoReply{arbitrary: vec![]};
+        let testee = OfpEchoReply { arbitrary: vec![] };
         assert_eq!(expected, testee.header(0, xid));
     }
 
     #[test]
     fn echo_reply_body_serialization() {
-        let arbitrary = vec![1,2,3,4];
-        let testee = OfpEchoReply{arbitrary: arbitrary};
+        let arbitrary = vec![1, 2, 3, 4];
+        let testee = OfpEchoReply {
+            arbitrary: arbitrary,
+        };
         let mut ser = vec![];
         testee.serialize_body(&mut ser).unwrap();
-        assert_eq!(vec![1,2,3,4], ser);
+        assert_eq!(vec![1, 2, 3, 4], ser);
         assert_eq!(12, testee.header(ser.len(), 1).length);
     }
 
@@ -305,7 +307,7 @@ mod tests {
     fn oxm_tlv_serialization() {
         let testee = OfpOxmTlv::new_in_port(0x11223344);
         assert_eq!(8, testee.length());
-        assert_eq!(vec![0x11,0x22,0x33,0x44], testee.body);
+        assert_eq!(vec![0x11, 0x22, 0x33, 0x44], testee.body);
     }
 
     #[test]
@@ -326,7 +328,10 @@ mod tests {
         let mut ser = vec![];
         testee.serialize(&mut ser).unwrap();
         assert_eq!(16, ser.len());
-        assert_eq!(vec![0,0,0,16,0x11,0x22,0x33,0x44,0,0,0,0,0,0,0,0], ser);
+        assert_eq!(
+            vec![0, 0, 0, 16, 0x11, 0x22, 0x33, 0x44, 0, 0, 0, 0, 0, 0, 0, 0],
+            ser
+        );
     }
 
 }

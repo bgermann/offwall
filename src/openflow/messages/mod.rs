@@ -18,7 +18,8 @@ impl OfpErrorMsg {
         let target_length = 64 - header.len();
         let shrunk_body = if body.len() < target_length {
             body
-        } else {
+        }
+        else {
             &body[0..target_length]
         };
         buf.extend_from_slice(shrunk_body);
@@ -26,7 +27,7 @@ impl OfpErrorMsg {
     }
 
     pub fn new_hello_failed() -> OfpErrorMsg {
-        OfpErrorMsg{
+        OfpErrorMsg {
             typ: OfpErrorType::HelloFailed as u16,
             code: OfpHelloFailedCode::Incompatible as u16,
             data: vec![],
@@ -34,31 +35,45 @@ impl OfpErrorMsg {
     }
 
     pub fn new_bad_request(code: OfpBadRequestCode, header: &[u8], body: &[u8]) -> OfpErrorMsg {
-        OfpErrorMsg{
+        OfpErrorMsg {
             typ: OfpErrorType::BadRequest as u16,
             code: code as u16,
             data: Self::first_64_bytes(header, body),
         }
     }
     pub fn check_table_full(&self) -> bool {
-        self.typ == OfpErrorType::FlowModFailed as u16 &&
-        self.code == OfpFlowModFailedCode::TableFull as u16
+        self.typ == OfpErrorType::FlowModFailed as u16
+            && self.code == OfpFlowModFailedCode::TableFull as u16
     }
 }
 
 impl fmt::Display for OfpErrorMsg {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let t = self.typ;
-        let typ =
-            if t == OfpErrorType::HelloFailed as u16 {OfpErrorType::HelloFailed}
-            else if t == OfpErrorType::BadRequest as u16 {OfpErrorType::BadRequest}
-            else if t == OfpErrorType::BadAction as u16 {OfpErrorType::BadAction}
-            else if t == OfpErrorType::BadInstruction as u16 {OfpErrorType::BadInstruction}
-            else if t == OfpErrorType::BadMatch as u16 {OfpErrorType::BadMatch}
-            else if t == OfpErrorType::FlowModFailed as u16 {OfpErrorType::FlowModFailed}
-            else if t == OfpErrorType::Experimenter as u16 {OfpErrorType::Experimenter}
-            else {return write!(f, "OpenFlow Error: type({}), code({})", self.typ, self.code);}
-        ;
+        let typ = if t == OfpErrorType::HelloFailed as u16 {
+            OfpErrorType::HelloFailed
+        }
+        else if t == OfpErrorType::BadRequest as u16 {
+            OfpErrorType::BadRequest
+        }
+        else if t == OfpErrorType::BadAction as u16 {
+            OfpErrorType::BadAction
+        }
+        else if t == OfpErrorType::BadInstruction as u16 {
+            OfpErrorType::BadInstruction
+        }
+        else if t == OfpErrorType::BadMatch as u16 {
+            OfpErrorType::BadMatch
+        }
+        else if t == OfpErrorType::FlowModFailed as u16 {
+            OfpErrorType::FlowModFailed
+        }
+        else if t == OfpErrorType::Experimenter as u16 {
+            OfpErrorType::Experimenter
+        }
+        else {
+            return write!(f, "OpenFlow Error: type({}), code({})", self.typ, self.code);
+        };
         write!(f, "OpenFlow Error: {:?}, code({})", typ, self.code)
     }
 }
@@ -134,8 +149,7 @@ pub const OFPP_MAX: u32 = 0xffff_ff00;
 pub const OFPP_ANY: u32 = 0xffff_ffff;
 
 pub enum OfpType {
-/* Immutable messages. */
-
+    /* Immutable messages. */
     /// Symmetric message
     Hello = 0,
     /// Symmetric message
@@ -145,25 +159,21 @@ pub enum OfpType {
     /// Symmetric message
     EchoReply = 3,
 
-/* Switch configuration messages. */
-
+    /* Switch configuration messages. */
     /// Controller/switch message
     FeaturesRequest = 5,
     /// Controller/switch message
     FeaturesReply = 6,
 
-/* Asynchronous messages. */
-
+    /* Asynchronous messages. */
     /// Async message
     PortStatus = 12,
 
-/* Controller command messages. */
-
+    /* Controller command messages. */
     /// Controller/switch message
     FlowMod = 14,
 
-/* Asynchronous message configuration. */
-
+    /* Asynchronous message configuration. */
     /// Controller/switch message
     SetAsync = 28,
 }
@@ -197,10 +207,9 @@ pub struct OfpSwitchFeatures {
     /// Identify auxiliary connections
     auxiliary_id: u8,
     /// Align to 64-bits.
-    pad: [u8;2],
+    pad: [u8; 2],
 
-/* Features. */
-
+    /* Features. */
     /// Bitmap of support OfpCapabilities.
     capabilities: u32,
     reserved: u32,
@@ -255,7 +264,7 @@ impl OfpOxmTlv {
     /// Prereqs: None.
     /// Format: 32-bit integer in network byte order.
     pub fn new_in_port(in_port: u32) -> OfpOxmTlv {
-        let mut port_bytes = vec![0;4];
+        let mut port_bytes = vec![0; 4];
         NetworkEndian::write_u32(&mut port_bytes, in_port);
         OfpOxmTlv::new(OxmOfbMatchFields::InPort, false, port_bytes)
     }
@@ -294,7 +303,11 @@ impl OfpOxmTlv {
     /// OxmOfbMatchFields::EthType must be either 0x0800 or 0x86dd.
     /// OxmOfbMatchFields::IpProto must match 6 or 17 exactly.
     /// Format: 16-bit integer in network byte order.
-    pub fn new_port(proto: &IpProtocol, port: u16, endpoint: &ProtocolEndpoint) -> Option<OfpOxmTlv> {
+    pub fn new_port(
+        proto: &IpProtocol,
+        port: u16,
+        endpoint: &ProtocolEndpoint,
+    ) -> Option<OfpOxmTlv> {
         let field = match *proto {
             IpProtocol::Tcp => match *endpoint {
                 ProtocolEndpoint::Src => OxmOfbMatchFields::TcpSrc,
@@ -306,11 +319,10 @@ impl OfpOxmTlv {
             },
             _ => return None,
         };
-        let mut port_bytes = vec![0;2];
+        let mut port_bytes = vec![0; 2];
         NetworkEndian::write_u16(&mut port_bytes, port);
         Some(OfpOxmTlv::new(field, false, port_bytes))
     }
-
 }
 
 /// OXM Class IDs.
@@ -358,7 +370,7 @@ pub enum OfpErrorType {
     BadAction = 2,
     /// Error in instruction list.
     BadInstruction = 3,
-     /// Error in match.
+    /// Error in match.
     BadMatch = 4,
     /// Problem modifying flow entry.
     FlowModFailed = 5,
@@ -433,7 +445,6 @@ pub struct OfpInstructionActions {
     actions: Vec<OfpActionOutput>,
 }
 
-
 /* ## --------------------------- ## */
 /* ## OpenFlow Flow Modification. ## */
 /* ## --------------------------- ## */
@@ -447,10 +458,10 @@ pub enum OfpFlowModCommand {
 }
 
 /// Value used in `idle_timeout` and `hard_timeout` to indicate that the entry is permanent.
-pub const OFP_FLOW_PERMANENT : u16 = 0;
+pub const OFP_FLOW_PERMANENT: u16 = 0;
 
 /// By default, choose a priority in the middle.
-pub const OFP_DEFAULT_PRIORITY : u16 = 0x8000;
+pub const OFP_DEFAULT_PRIORITY: u16 = 0x8000;
 
 /// Flow setup and teardown (controller -> datapath).
 #[derive(Debug)]
@@ -496,7 +507,6 @@ pub struct OfpFlowMod {
     match_field: OfpMatch,
 
     /* The variable size and padded match is always followed by instructions. */
-
     /// Instruction set - 0 or more.
     /// The length of the instruction
     /// set is inferred from the
@@ -504,7 +514,7 @@ pub struct OfpFlowMod {
     instructions: Vec<OfpInstructionActions>,
 }
 
-pub const OFP_NO_BUFFER : u32 = 0xffff_ffff;
+pub const OFP_NO_BUFFER: u32 = 0xffff_ffff;
 
 /// `OfpErrorMsg` 'code' values for `OfpErrorType::BadAction`.
 /// 'data' contains at least the first 64 bytes of the failed request.
