@@ -24,7 +24,7 @@
     <propval name='csv' type='astring' value='/etc/offwall.csv' />
     <propval name='loglevel' type='count' value='0' />
   </property_group>
-  <stability value='Evolving' />
+  <stability value='Stable' />
   <template>
     <common_name>
       <loctext xml:lang='C'>OFFWall OpenFlow Controller</loctext>
