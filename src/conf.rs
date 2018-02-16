@@ -132,22 +132,36 @@ impl error::Error for Error {
 
 #[derive(Debug)]
 pub struct OfPort {
-    pub of_port: u32,
+    /// The OpenFlow port number
+    of_port: u32,
+}
+impl OfPort {
+    /// Gets the OpenFlow port number
+    pub fn of_port(&self) -> u32 {
+        self.of_port
+    }
 }
 
 /// Represents the ports of the switch that
 /// are subject to the firewall bypassing
 #[derive(Debug)]
 pub struct Ports {
-    pub inside: OfPort,
-    pub fw_in: OfPort,
-    pub fw_out: OfPort,
-    pub outside: OfPort,
+    inside: OfPort,
+    fw_in: OfPort,
+    fw_out: OfPort,
+    outside: OfPort,
 }
 
 #[derive(Debug)]
 pub struct OfTable {
-    pub id: u8,
+    /// The target OpenFlow Table's ID
+    id: u8,
+}
+impl OfTable {
+    /// Gets the target OpenFlow Table's ID
+    pub fn id(&self) -> u8 {
+        self.id
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -178,11 +192,15 @@ trait Section {
 #[derive(Debug)]
 pub struct OfConnection {
     proto: ConnectionProtocol,
-    pub socket: SocketAddr,
+    socket: SocketAddr,
     pkcs12: Option<(Vec<u8>, String)>,
 }
-#[cfg(feature = "tls")]
 impl OfConnection {
+    pub fn socket(&self) -> SocketAddr {
+        self.socket
+    }
+
+    #[cfg(feature = "tls")]
     pub fn tls_acceptor(&self) -> tls_api::Result<Option<tls_api_openssl::TlsAcceptor>> {
         Ok(match self.pkcs12 {
             Some(ref p12) => {
@@ -311,6 +329,19 @@ impl Section for Ports {
 }
 
 impl Ports {
+    pub fn inside(&self) -> &OfPort {
+        &self.inside
+    }
+    pub fn fw_in(&self) -> &OfPort {
+        &self.fw_in
+    }
+    pub fn fw_out(&self) -> &OfPort {
+        &self.fw_out
+    }
+    pub fn outside(&self) -> &OfPort {
+        &self.outside
+    }
+
     pub fn in_out_from_direction(&self, dir: Direction) -> (&OfPort, &OfPort) {
         match dir {
             Direction::Inside => (&self.outside, &self.inside),

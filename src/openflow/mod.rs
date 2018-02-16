@@ -105,17 +105,17 @@ impl<'a> OfController<'a> {
         output_port: &OfPort,
         prio: u16,
     ) -> io::Result<()> {
-        let in_tlv = OfpOxmTlv::new_in_port(input_port.of_port);
+        let in_tlv = OfpOxmTlv::new_in_port(input_port.of_port());
         match_field.add_tlv(in_tlv);
 
-        let output = OfpActionOutput::new(output_port.of_port);
+        let output = OfpActionOutput::new(output_port.of_port());
         let instr = vec![OfpInstructionActions::new(vec![output])];
 
         let flow_mod = OfpFlowMod::new(
             cmd,
-            self.table.id,
+            self.table.id(),
             prio,
-            output_port.of_port,
+            output_port.of_port(),
             match_field,
             instr,
         );
@@ -128,10 +128,10 @@ impl<'a> OfController<'a> {
         let p = self.ports;
         let cmd = OfpFlowModCommand::Add;
         let prio = BASIC_FLOW_PRIORITY;
-        self.send_flow_mod(cmd, OfpMatch::new(), &p.inside, &p.fw_in, prio)?;
-        self.send_flow_mod(cmd, OfpMatch::new(), &p.fw_in, &p.inside, prio)?;
-        self.send_flow_mod(cmd, OfpMatch::new(), &p.outside, &p.fw_out, prio)?;
-        self.send_flow_mod(cmd, OfpMatch::new(), &p.fw_out, &p.outside, prio)
+        self.send_flow_mod(cmd, OfpMatch::new(), p.inside(), p.fw_in(), prio)?;
+        self.send_flow_mod(cmd, OfpMatch::new(), p.fw_in(), p.inside(), prio)?;
+        self.send_flow_mod(cmd, OfpMatch::new(), p.outside(), p.fw_out(), prio)?;
+        self.send_flow_mod(cmd, OfpMatch::new(), p.fw_out(), p.outside(), prio)
     }
 
     fn send_bypass_flow_mods(
@@ -141,7 +141,7 @@ impl<'a> OfController<'a> {
     ) -> io::Result<()> {
         for rec in records {
             let mat = OfpMatch::from(rec);
-            let (input, output) = self.ports.in_out_from_direction(rec.direction);
+            let (input, output) = self.ports.in_out_from_direction(rec.direction());
             self.send_flow_mod(cmd, mat, input, output, OFP_DEFAULT_PRIORITY)?;
         }
         Ok(())
@@ -155,30 +155,28 @@ impl<'a> OfController<'a> {
         self.stream.read_exact(&mut buf)?;
 
         // Process the message
-        let t = header.typ;
+        let t = header.typ();
         if t == OfpType::Hello as u8 {
             // simple version discovery
-            if header.version < OFP_VERSION {
+            if header.version() < OFP_VERSION {
                 return Err(Error::HelloFailed);
             }
             self.hello_received = true;
             let req = OfpHeader::new(OfpType::FeaturesRequest, gen_xid());
             req.serialize(&mut self.stream)?;
         }
-        else if !self.hello_received || header.version != OFP_VERSION {
+        else if !self.hello_received || header.version() != OFP_VERSION {
             return Err(Error::BadRequest(OfpBadRequestCode::BadVersion, buf));
         }
         else if t == OfpType::EchoRequest as u8 {
             // The EchoReply takes the same body byte stream as the EchoRequest
             let req = OfpEchoRequest::deserialize(buf)?;
-            let rep = OfpEchoReply {
-                arbitrary: req.arbitrary,
-            };
-            rep.serialize(&mut self.stream, header.xid)?;
+            let rep = OfpEchoReply::new(req.arbitrary());
+            rep.serialize(&mut self.stream, header.xid())?;
         }
         else if t == OfpType::FeaturesReply as u8 {
             let features = OfpSwitchFeatures::deserialize(buf)?;
-            let datapath_id = features.datapath_id;
+            let datapath_id = features.datapath_id();
             info!(
                 "The connected switch identified itself with datapath id {}",
                 datapath_id
@@ -213,7 +211,8 @@ impl<'a> OfController<'a> {
         else {
             debug!(
                 "Cannot interpret message of type {}. Full message body: {:?}",
-                header.typ, buf
+                header.typ(),
+                buf
             );
             return Err(Error::BadRequest(OfpBadRequestCode::BadType, buf));
         }
@@ -261,16 +260,16 @@ impl<'a> OfController<'a> {
             Error::HelloFailed => {
                 let msg = format!(
                     "The connected switch supports only OpenFlow protocol version {:x}",
-                    header.version
+                    header.version()
                 );
                 let err = OfpErrorMsg::new_hello_failed();
-                err.serialize(&mut self.stream, header.xid)?;
+                err.serialize(&mut self.stream, header.xid())?;
                 return Err(io::Error::new(io::ErrorKind::BrokenPipe, msg));
             }
             Error::BadRequest(code, buf) => OfpErrorMsg::new_bad_request(code, header_buf, &buf),
         };
         debug!("Outgoing error message: {:?}", err_msg);
-        err_msg.serialize(&mut self.stream, header.xid)
+        err_msg.serialize(&mut self.stream, header.xid())
     }
 
     /// Manages the lifetime of a controller by accepting a TCP connection,

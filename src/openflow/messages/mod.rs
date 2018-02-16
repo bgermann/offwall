@@ -78,14 +78,41 @@ impl fmt::Display for OfpErrorMsg {
     }
 }
 
+/* Some getters */
+
+impl OfpHeader {
+    /// Gets the version
+    pub fn version(&self) -> u8 {
+        self.version
+    }
+    /// This packet's OfpType.
+    pub fn typ(&self) -> u8 {
+        self.typ
+    }
+    /// Gets the transaction id
+    pub fn xid(&self) -> u32 {
+        self.xid
+    }
+}
+impl OfpSwitchFeatures {
+    pub fn datapath_id(&self) -> u64 {
+        self.datapath_id
+    }
+}
+impl OfpEchoRequest {
+    pub fn arbitrary(self) -> Vec<u8> {
+        self.arbitrary
+    }
+}
+
 #[derive(Debug)]
 pub struct OfpEchoRequest {
-    pub arbitrary: Vec<u8>,
+    arbitrary: Vec<u8>,
 }
 
 #[derive(Debug)]
 pub struct OfpEchoReply {
-    pub arbitrary: Vec<u8>,
+    arbitrary: Vec<u8>,
 }
 
 #[derive(Debug, Clone)]
@@ -182,15 +209,15 @@ pub enum OfpType {
 #[derive(Debug, PartialEq)]
 pub struct OfpHeader {
     /// OFP_VERSION.
-    pub version: u8,
+    version: u8,
     /// This packet's OfpType.
-    pub typ: u8,
+    typ: u8,
     /// This packet's length including this OfpHeader.
     length: u16,
     /// Transaction id associated with this packet.
     /// Replies use the same id as was in the request
     /// to facilitate pairing.
-    pub xid: u32,
+    xid: u32,
 }
 
 /// Switch features.
@@ -199,7 +226,7 @@ pub struct OfpSwitchFeatures {
     /// Datapath unique ID. The lower 48-bits are for
     /// a MAC address, while the upper 16-bits are
     /// implementer-defined.
-    pub datapath_id: u64,
+    datapath_id: u64,
     /// Max packets buffered at once.
     n_buffers: u32,
     /// Number of tables supported by datapath.

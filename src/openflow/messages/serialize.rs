@@ -76,23 +76,23 @@ impl<'a> From<&'a BypassRecord> for OfpMatch {
     fn from(rec: &'a BypassRecord) -> Self {
         let mut mat = OfpMatch::new();
         mat.add_tlv(OfpOxmTlv::new_eth_type_ipv4());
-        if let Some(ref ip) = rec.src_ip {
+        if let Some(ref ip) = rec.src_ip() {
             let src_ip = OfpOxmTlv::new_ipv4(ip, &ProtocolEndpoint::Src);
             mat.add_tlv(src_ip);
         }
-        if let Some(ref ip) = rec.dst_ip {
+        if let Some(ref ip) = rec.dst_ip() {
             let dst_ip = OfpOxmTlv::new_ipv4(ip, &ProtocolEndpoint::Dst);
             mat.add_tlv(dst_ip);
         }
-        if let Some(ref proto) = rec.proto {
+        if let Some(ref proto) = rec.proto() {
             let oxm_proto = OfpOxmTlv::new_ip_proto(proto);
             mat.add_tlv(oxm_proto);
-            if let Some(port) = rec.src_port {
+            if let Some(port) = rec.src_port() {
                 if let Some(oxm_port) = OfpOxmTlv::new_port(proto, port, &ProtocolEndpoint::Src) {
                     mat.add_tlv(oxm_port);
                 }
             }
-            if let Some(port) = rec.dst_port {
+            if let Some(port) = rec.dst_port() {
                 if let Some(oxm_port) = OfpOxmTlv::new_port(proto, port, &ProtocolEndpoint::Dst) {
                     mat.add_tlv(oxm_port);
                 }
@@ -212,6 +212,13 @@ pub trait OfpPacket {
     fn serialize_body<S: Write>(&self, stream: &mut S) -> io::Result<()>;
 }
 
+impl OfpEchoReply {
+    pub fn new(arbitrary: Vec<u8>) -> OfpEchoReply {
+        OfpEchoReply {
+            arbitrary: arbitrary,
+        }
+    }
+}
 impl OfpPacket for OfpEchoReply {
     fn typ() -> OfpType {
         OfpType::EchoReply

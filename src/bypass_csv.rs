@@ -113,20 +113,45 @@ pub enum IpProtocol {
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct BypassRecord {
     /// The source IP address
-    pub src_ip: Option<Ipv4Network>,
+    src_ip: Option<Ipv4Network>,
     /// The source port
-    pub src_port: Option<u16>,
+    src_port: Option<u16>,
     /// The destination IP address
-    pub dst_ip: Option<Ipv4Network>,
+    dst_ip: Option<Ipv4Network>,
     /// The destination port
-    pub dst_port: Option<u16>,
+    dst_port: Option<u16>,
     /// The IP protocol
-    pub proto: Option<IpProtocol>,
+    proto: Option<IpProtocol>,
     /// The direction. The switch's input/output ports should be derived from it.
-    pub direction: Direction,
+    direction: Direction,
 }
 
 impl BypassRecord {
+    /// Gets the source IP address
+    pub fn src_ip(&self) -> Option<Ipv4Network> {
+        self.src_ip
+    }
+    /// Gets the source port
+    pub fn src_port(&self) -> Option<u16> {
+        self.src_port
+    }
+    /// Gets the destination IP address
+    pub fn dst_ip(&self) -> Option<Ipv4Network> {
+        self.dst_ip
+    }
+    /// Gets the destination port
+    pub fn dst_port(&self) -> Option<u16> {
+        self.dst_port
+    }
+    /// Gets the IP protocol
+    pub fn proto(&self) -> Option<IpProtocol> {
+        self.proto
+    }
+    /// Gets the direction
+    pub fn direction(&self) -> Direction {
+        self.direction
+    }
+
     fn reverse_direction(&self) -> BypassRecord {
         let direction = match self.direction {
             Direction::Inside => Direction::Outside,
@@ -158,11 +183,14 @@ fn parse_protocol(ps: &str) -> Result<IpProtocol, Error> {
 }
 
 pub struct CsvParser {
-    pub path: String,
+    path: String,
     inside_net: Ipv4Network,
 }
 
 impl CsvParser {
+    pub fn path(&self) -> &str {
+        &self.path
+    }
     pub fn new(path: String, inside_net: Ipv4Network) -> CsvParser {
         CsvParser {
             path: path,
@@ -186,7 +214,7 @@ impl CsvParser {
     /// let p = parse_line("# comment");
     /// assert_eq!(Ok(None));
     /// ```
-    fn parse_line(&self, line: String) -> Result<Vec<BypassRecord>, Error> {
+    fn parse_line(&self, line: &str) -> Result<Vec<BypassRecord>, Error> {
         if line.is_empty() || line.starts_with(COMMENT) {
             return Ok(Vec::with_capacity(0));
         }
@@ -285,7 +313,7 @@ impl CsvParser {
 
         for line_res in reader.lines() {
             let line = line_res?;
-            let records = self.parse_line(line)?;
+            let records = self.parse_line(&line)?;
             for rec in records {
                 bypass_records.insert(rec);
             }

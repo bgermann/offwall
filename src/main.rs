@@ -63,10 +63,10 @@ fn register_bypass_file(parser: &CsvParser, record_tx: &Sender<HashSet<BypassRec
         let (tx, rx) = mpsc::channel();
         if let Ok(mut watcher) = notify::watcher(tx, Duration::from_secs(NOTIFY_SECONDS)) {
             if watcher
-                .watch(&parser.path, RecursiveMode::NonRecursive)
+                .watch(&parser.path(), RecursiveMode::NonRecursive)
                 .is_ok()
             {
-                info!("Watching file {}", parser.path);
+                info!("Watching file {}", parser.path());
                 match handle_file_events(&rx, parser, record_tx) {
                     Ok(_) => warn!("notify watch removed"),
                     Err(e) => error!("{}", e),
@@ -167,7 +167,7 @@ fn handle_cli_args() -> io::Result<()> {
     // first file read that terminates the program on errors
     let records = RefCell::new(csv_parser.parse_file()?);
 
-    let listen_socket = net::TcpListener::bind(conn.socket)?;
+    let listen_socket = net::TcpListener::bind(conn.socket())?;
     info!("Listening on {}", listen_socket.local_addr()?);
 
     let (tx, rx) = mpsc::channel();
