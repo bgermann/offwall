@@ -226,7 +226,7 @@ dependencies = [
 
 [[package]]
 name = "offwall"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "byteorder 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.30.0 (registry+https://github.com/rust-lang/crates.io-index)",
