@@ -1,5 +1,8 @@
 /*!
-A parser for an INI file with the following structure:
+An INI parser for files containing the general OFFWall configuration.
+
+The files have to have the following structure.
+The `[Connection]` and `[Table]` sections can be left out and have a default.
 
 ```ini
 [Connection]
@@ -25,7 +28,6 @@ outside=4
 */
 
 use bypass_csv::Direction;
-use openflow::messages::OFP_TCP_PORT;
 use openflow::messages::OFPP_MAX;
 
 use ini::Ini;
@@ -41,7 +43,7 @@ use std::fs::File;
 use std::io;
 use std::io::Read;
 use std::iter::IntoIterator;
-use std::net::*;
+use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
 use std::num::ParseIntError;
 use std::str::FromStr;
 use std::vec;
@@ -63,21 +65,35 @@ const URI_KEY: &str = "uri";
 const P12_KEY: &str = "pkcs12";
 const PASS_KEY: &str = "passwd";
 
+/// Official IANA registered port for OpenFlow.
+const OFP_TCP_PORT: u16 = 6653;
+
 const NET_SECTION: &str = "Networks";
 
 const TABLE_SECTION: &str = "Table";
 const ID_KEY: &str = "id";
 
+/// Represents all errors that can occur
+/// while parsing an INI configuration file
 #[derive(Debug)]
 pub enum Error {
+    /// An I/O error
     Io(io::Error),
+    /// A general parsing error from the INI parsing library
     Ini(ini::Error),
+    /// An error while parsing the OpenFlow Table ID
     ParseTableId(ParseIntError),
+    /// An error while parsing a switch port number
     ParseSwitchPort(ParseIntError),
+    /// The successfully parsed number is not in the allowed range
     InvalidSwitchPortNo(String),
+    /// An error while parsing an IP address in CIDR representation
     InvalidCidr(IpNetworkError, String),
+    /// A required INI section is missing
     MissingSection(&'static str),
+    /// A required key is missing from an available INI section
     MissingEntry(&'static str, &'static str),
+    /// An invalid OpenFlow Connection URI
     InvalidUri,
 }
 
@@ -100,7 +116,7 @@ impl fmt::Display for Error {
             Error::MissingEntry(s, k) => {
                 write!(f, "The INI [{}] section does not have a '{}' key", s, k)
             }
-            Error::InvalidUri => write!(f, "The OpenFlow Connection URI from INI file is invalid"),
+            Error::InvalidUri => write!(f, "The OpenFlow Connection URI is invalid"),
         }
     }
 }
@@ -130,28 +146,31 @@ impl error::Error for Error {
     }
 }
 
+/// A physical or logical OpenFlow Port
 #[derive(Debug)]
 pub struct OfPort {
-    /// The OpenFlow port number
+    /// The OpenFlow Port number
     of_port: u32,
 }
 impl OfPort {
-    /// Gets the OpenFlow port number
+    /// Gets the OpenFlow Port number
     pub fn of_port(&self) -> u32 {
         self.of_port
     }
 }
 
-/// Represents the ports of the switch that
-/// are subject to the firewall bypassing
+/// The ports of a switch that are
+/// subject to the firewall bypassing
 #[derive(Debug)]
-pub struct Ports {
+pub struct OfPorts {
     inside: OfPort,
     fw_in: OfPort,
     fw_out: OfPort,
     outside: OfPort,
 }
 
+/// An OpenFlow Table that is the target for
+/// all of OFFWall's flow mod messages
 #[derive(Debug)]
 pub struct OfTable {
     /// The target OpenFlow Table's ID
@@ -164,6 +183,8 @@ impl OfTable {
     }
 }
 
+/// The Protocol that is used to connect
+/// OFFWall to OpenFlow Switches
 #[derive(Debug, PartialEq)]
 enum ConnectionProtocol {
     Tcp,
@@ -183,23 +204,32 @@ impl FromStr for ConnectionProtocol {
     }
 }
 
+/// Each struct that represents one [Section] of
+/// the INI file has to implement the Section trait
 trait Section {
     type S;
 
     fn from_ini(conf: &Ini) -> Result<Self::S, Error>;
 }
 
+/// Contains the parsed information from an OpenFlow Connection URI and the
+/// PKCS#12 information to act as an OpenFlow Controller and possibly TLS server
 #[derive(Debug)]
 pub struct OfConnection {
     proto: ConnectionProtocol,
     socket: SocketAddr,
+    /// None for TCP connections, Some(...) for TLS connections
     pkcs12: Option<(Vec<u8>, String)>,
 }
 impl OfConnection {
+    /// Gets the SocketAddr that is utilized
+    /// to serve OpenFlow Connections
     pub fn socket(&self) -> SocketAddr {
         self.socket
     }
 
+    /// Builds a TLS endpoint that is utilized to serve secure OpenFlow Connections.
+    /// None if the OfConnection is plain TCP.
     #[cfg(feature = "tls")]
     pub fn tls_acceptor(&self) -> tls_api::Result<Option<tls_api_openssl::TlsAcceptor>> {
         Ok(match self.pkcs12 {
@@ -293,8 +323,8 @@ impl FromStr for OfPort {
     }
 }
 
-impl Section for Ports {
-    type S = Ports;
+impl Section for OfPorts {
+    type S = OfPorts;
 
     fn from_ini(conf: &Ini) -> Result<Self::S, Error> {
         debug!("Reading [{}] section", PORTS_SECTION);
@@ -316,7 +346,7 @@ impl Section for Ports {
             .ok_or(Error::MissingEntry(PORTS_SECTION, OUTSIDE_KEY))?;
 
         // the port values are trimmed, so try to parse directly
-        let ports = Ports {
+        let ports = OfPorts {
             inside: OfPort::from_str(inside)?,
             fw_in: OfPort::from_str(fw_in)?,
             fw_out: OfPort::from_str(fw_out)?,
@@ -328,20 +358,34 @@ impl Section for Ports {
     }
 }
 
-impl Ports {
+impl OfPorts {
+    /// Gets the OpenFlow port that is considered to
+    /// be at the OpenFlow Switch's inside network
     pub fn inside(&self) -> &OfPort {
         &self.inside
     }
+    /// Gets the OpenFlow port that is considered to
+    /// be at the OpenFlow Switch's connection to the
+    /// firewall that is responsible for the data flow
+    /// from and to the inside network
     pub fn fw_in(&self) -> &OfPort {
         &self.fw_in
     }
+    /// Gets the OpenFlow port that is considered to
+    /// be at the OpenFlow Switch's connection to the
+    /// firewall that is responsible for the data flow
+    /// from and to the outside network
     pub fn fw_out(&self) -> &OfPort {
         &self.fw_out
     }
+    /// Gets the OpenFlow port that is considered to
+    /// be at the OpenFlow Switch's outside network
     pub fn outside(&self) -> &OfPort {
         &self.outside
     }
 
+    /// Returns the tuple (input port, output port) for a firewall
+    /// bypass rule depending on the `Direction` of a `BypassRecord`
     pub fn in_out_from_direction(&self, dir: Direction) -> (&OfPort, &OfPort) {
         match dir {
             Direction::Inside => (&self.outside, &self.inside),
@@ -350,7 +394,7 @@ impl Ports {
     }
 }
 
-impl<'a> IntoIterator for &'a Ports {
+impl<'a> IntoIterator for &'a OfPorts {
     type Item = &'a OfPort;
     type IntoIter = vec::IntoIter<&'a OfPort>;
 
@@ -412,7 +456,9 @@ impl Default for OfTable {
     }
 }
 
-pub fn parse_file(path: &str) -> Result<(OfConnection, OfTable, Ports, Ipv4Network), Error> {
+/// Parses an INI file at `path` that is expected to contain the OFFWall
+/// configuration structure and returns a tuple of the configuration aspects
+pub fn parse_file(path: &str) -> Result<(OfConnection, OfTable, OfPorts, Ipv4Network), Error> {
     info!("Reading INI file {}", path);
 
     let conf = match Ini::load_from_file(path) {
@@ -425,7 +471,7 @@ pub fn parse_file(path: &str) -> Result<(OfConnection, OfTable, Ports, Ipv4Netwo
     Ok((
         OfConnection::from_ini(&conf)?,
         OfTable::from_ini(&conf)?,
-        Ports::from_ini(&conf)?,
+        OfPorts::from_ini(&conf)?,
         Ipv4Network::from_ini(&conf)?,
     ))
 }

@@ -39,15 +39,27 @@ const DELIMITER: char = ';';
 /// The char introducing a line comment.
 const COMMENT: char = '#';
 
+/// Represents all errors that can occur while
+/// parsing a CSV file with firewall bypass rules
 #[derive(Debug)]
 pub enum Error {
+    /// A line does not have exactly 5 values
     ValueCount(String),
+    /// An invalid CIDR form occured
     InvalidCidr(IpNetworkError, String),
+    /// A UDP or TCP number is invalid
     InvalidPortNumber(String),
+    /// An IP protocol is referenced that is not supported
     InvalidProtocol(String),
+    /// A line only contains wildcards
     OnlyWildcards(String),
+    /// A line contains at least one port
+    /// number with protocol being a wildcard
     PortWithProtocolWildcard(String),
+    /// A line contains at least one port number with ICMP
     PortWithIcmp(String),
+    /// A line does not contain an IP range
+    /// that is in the configured inside net
     NotMatchingInsideNet(String),
 }
 
@@ -94,17 +106,24 @@ impl error::Error for Error {
     }
 }
 
+/// The direction of a data flow (either going to
+/// the inside or going to the outside network)
 #[derive(Debug, Hash, Eq, PartialEq, Clone, Copy)]
 pub enum Direction {
+    /// The data goes to the inside network
     Inside,
+    /// The data goes to the outside network
     Outside,
 }
 
-/// The IP protocols that are allowed.
+/// Each of the IP protocols that a firewall bypass rule can contain
 #[derive(Debug, Hash, Eq, PartialEq, Clone, Copy)]
 pub enum IpProtocol {
+    /// Internet Control Message Protocol
     Icmp = 1,
+    /// Transmission Control Protocol
     Tcp = 6,
+    /// User Datagram Protocol
     Udp = 17,
 }
 
@@ -122,7 +141,8 @@ pub struct BypassRecord {
     dst_port: Option<u16>,
     /// The IP protocol
     proto: Option<IpProtocol>,
-    /// The direction. The switch's input/output ports should be derived from it.
+    /// The direction. The switch's input/output
+    /// ports should be derived from it.
     direction: Direction,
 }
 
@@ -182,15 +202,18 @@ fn parse_protocol(ps: &str) -> Result<IpProtocol, Error> {
     }
 }
 
+/// The line oriented parser for CSV firewall bypass rules
 pub struct CsvParser {
     path: String,
     inside_net: Ipv4Network,
 }
 
 impl CsvParser {
+    /// Gets the path of the file that this parser operates on
     pub fn path(&self) -> &str {
         &self.path
     }
+    /// Constructs a new `CsvParser`
     pub fn new(path: String, inside_net: Ipv4Network) -> CsvParser {
         CsvParser {
             path: path,

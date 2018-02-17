@@ -10,6 +10,8 @@ To spawn an instance with 4 ports you can run:
 ```
 */
 
+#![warn(missing_docs)]
+
 extern crate byteorder;
 #[macro_use]
 extern crate clap;
@@ -31,9 +33,11 @@ extern crate libc;
 #[cfg(unix)]
 extern crate syslog;
 
-mod bypass_csv;
-mod openflow;
-mod conf;
+// These do not have to be public, but are to
+// automatically check and generate documentation
+pub mod bypass_csv;
+pub mod conf;
+pub mod openflow;
 
 use bypass_csv::BypassRecord;
 use bypass_csv::CsvParser;
@@ -103,7 +107,7 @@ fn handle_file_events(
 
 /// Reads command line arguments and sets the program up as intended.
 /// Spawns a new thread to watch the bypass file.
-/// Finally runs an OfController infinitely.
+/// Finally runs an `OfController` infinitely.
 fn handle_cli_args() -> io::Result<()> {
     #[cfg(unix)]
     let unix_opts = "

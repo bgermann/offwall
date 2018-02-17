@@ -1,3 +1,11 @@
+/*!
+All serialization and construction routines for the OpenFlow message primitives
+
+Use the trait `OfpPacket` for serialization implementations of messages
+that are sent. Other primitives that are part of a message should
+implement a serialize funtion that operates on a given byte stream.
+*/
+
 use byteorder::{NetworkEndian, WriteBytesExt};
 use bypass_csv::BypassRecord;
 use openflow::messages::*;
@@ -7,6 +15,7 @@ use std::io::Write;
 use std::mem::size_of;
 
 impl OfpHeader {
+    /// Constructs an `OfpHeader`
     pub fn new(typ: OfpType, xid: u32) -> OfpHeader {
         OfpHeader {
             version: OFP_VERSION,
@@ -16,14 +25,17 @@ impl OfpHeader {
         }
     }
 
+    /// Returns the fixed header length of 8 (in byte)
     pub fn header_length() -> usize {
         size_of::<OfpHeader>()
     }
 
+    /// Returns the body length in byte
     pub fn body_length(&self) -> usize {
         self.length as usize - OfpHeader::header_length()
     }
 
+    /// Serializes this header on the given stream
     pub fn serialize<S: Write>(&self, stream: &mut S) -> io::Result<()> {
         stream.write_all(&[self.version, self.typ])?;
         stream.write_u16::<NetworkEndian>(self.length)?;
@@ -61,7 +73,7 @@ impl OfpMatch {
         (len + 7) / 8 * 8 - len
     }
 
-    pub fn serialize<S: Write>(&self, stream: &mut S) -> io::Result<()> {
+    fn serialize<S: Write>(&self, stream: &mut S) -> io::Result<()> {
         stream.write_u16::<NetworkEndian>(self.typ)?;
         stream.write_u16::<NetworkEndian>(self.length() as u16)?;
         for oxm in &self.oxm_fields {
@@ -104,10 +116,10 @@ impl<'a> From<&'a BypassRecord> for OfpMatch {
 
 impl OfpOxmTlv {
     fn length(&self) -> usize {
-        4 + self.body.len() as usize
+        4 + self.body.len()
     }
 
-    pub fn serialize<S: Write>(&self, stream: &mut S) -> io::Result<()> {
+    fn serialize<S: Write>(&self, stream: &mut S) -> io::Result<()> {
         let class = self.class as u32;
         let hasmask_u32 = if self.hasmask { 1 } else { 0 };
         let header = ((class) << 16) | ((self.field as u32) << 9) | (hasmask_u32 << 8)
@@ -118,6 +130,7 @@ impl OfpOxmTlv {
 }
 
 impl OfpActionOutput {
+    /// Constructs an OfpActionOutput
     pub fn new(port: u32) -> OfpActionOutput {
         OfpActionOutput {
             typ: OfpActionType::Output as u16,
@@ -128,7 +141,7 @@ impl OfpActionOutput {
         }
     }
 
-    pub fn serialize<S: Write>(&self, stream: &mut S) -> io::Result<()> {
+    fn serialize<S: Write>(&self, stream: &mut S) -> io::Result<()> {
         stream.write_u16::<NetworkEndian>(self.typ)?;
         stream.write_u16::<NetworkEndian>(self.len)?;
         stream.write_u32::<NetworkEndian>(self.port)?;
@@ -138,6 +151,7 @@ impl OfpActionOutput {
 }
 
 impl OfpInstructionActions {
+    /// Constructs an `OfpInstructionActions`
     pub fn new(actions: Vec<OfpActionOutput>) -> OfpInstructionActions {
         OfpInstructionActions {
             typ: OfpInstructionType::ApplyActions as u16,
@@ -146,7 +160,7 @@ impl OfpInstructionActions {
         }
     }
 
-    pub fn serialize<S: Write>(&self, stream: &mut S) -> io::Result<()> {
+    fn serialize<S: Write>(&self, stream: &mut S) -> io::Result<()> {
         let actions = &mut vec![];
         for action in &self.actions {
             action.serialize(actions)?;
@@ -159,6 +173,8 @@ impl OfpInstructionActions {
 }
 
 impl OfpFlowMod {
+    /// Constructs an `OfpFlowMod` with the given fields.
+    /// The other fields are aligned with the use in a firewall bypass.
     pub fn new(
         command: OfpFlowModCommand,
         table_id: u8,
@@ -188,6 +204,7 @@ impl OfpFlowMod {
 
 /// An OpenFlow packet. Must be implemented for all OpenFlow messsages that are sent.
 pub trait OfpPacket {
+    /// Constructs an OfpHeader with the given body length and transaction ID
     fn header(&self, body_length: usize, xid: u32) -> OfpHeader {
         OfpHeader {
             version: OFP_VERSION,
@@ -197,6 +214,7 @@ pub trait OfpPacket {
         }
     }
 
+    /// Returns the packet's type
     fn typ() -> OfpType;
 
     /// Serializes this packet with network byte order.
@@ -209,10 +227,14 @@ pub trait OfpPacket {
         stream.write_all(&body)
     }
 
+    /// Serializes this packet's body.
+    /// Implementers have to output network byte order on the given stream.
     fn serialize_body<S: Write>(&self, stream: &mut S) -> io::Result<()>;
 }
 
 impl OfpEchoReply {
+    /// Constructs a new `OfpEchoReply` with `arbitrary` content.
+    /// This should be the same as in the `OfpEchoRequest` that issued this reply.
     pub fn new(arbitrary: Vec<u8>) -> OfpEchoReply {
         OfpEchoReply {
             arbitrary: arbitrary,

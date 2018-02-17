@@ -1,3 +1,10 @@
+/*!
+All the base OpenFlow 1.3 message primitives needed to implement a firewall bypass
+
+This is based on the openflow.h from OpenFlow Switch Specification 1.3.5.
+The type names are changed to align with the Rust conventions.
+*/
+
 pub mod deserialize;
 pub mod serialize;
 
@@ -6,8 +13,12 @@ use bypass_csv::IpProtocol;
 use ipnetwork::Ipv4Network;
 use std::fmt;
 
+/// A marker to express the endpoint
+/// of any end-to-end network protocol
 pub enum ProtocolEndpoint {
+    /// The endpoint is the source
     Src,
+    /// The endpoint is the destination
     Dst,
 }
 
@@ -26,6 +37,7 @@ impl OfpErrorMsg {
         buf
     }
 
+    /// Constructs a Hello Failed error
     pub fn new_hello_failed() -> OfpErrorMsg {
         OfpErrorMsg {
             typ: OfpErrorType::HelloFailed as u16,
@@ -34,6 +46,7 @@ impl OfpErrorMsg {
         }
     }
 
+    /// Constructs a Bad Request error
     pub fn new_bad_request(code: OfpBadRequestCode, header: &[u8], body: &[u8]) -> OfpErrorMsg {
         OfpErrorMsg {
             typ: OfpErrorType::BadRequest as u16,
@@ -41,6 +54,8 @@ impl OfpErrorMsg {
             data: Self::first_64_bytes(header, body),
         }
     }
+
+    /// Checks if this `OfpErrorMsg` describes the target OpenFlow Table being full
     pub fn check_table_full(&self) -> bool {
         self.typ == OfpErrorType::FlowModFailed as u16
             && self.code == OfpFlowModFailedCode::TableFull as u16
@@ -81,40 +96,46 @@ impl fmt::Display for OfpErrorMsg {
 /* Some getters */
 
 impl OfpHeader {
-    /// Gets the version
+    /// Gets the packet's OpenFlow version
     pub fn version(&self) -> u8 {
         self.version
     }
-    /// This packet's OfpType.
+    /// Gets this packet's `OfpType`'s numerical respresentation.
     pub fn typ(&self) -> u8 {
         self.typ
     }
-    /// Gets the transaction id
+    /// Gets the packet's transaction id
     pub fn xid(&self) -> u32 {
         self.xid
     }
 }
 impl OfpSwitchFeatures {
+    /// Gets the datapath unique ID
     pub fn datapath_id(&self) -> u64 {
         self.datapath_id
     }
 }
 impl OfpEchoRequest {
+    /// Gets the message's content
     pub fn arbitrary(self) -> Vec<u8> {
         self.arbitrary
     }
 }
 
+/// An OpenFlow Echo Request
 #[derive(Debug)]
 pub struct OfpEchoRequest {
     arbitrary: Vec<u8>,
 }
 
+/// An OpenFlow Echo Reply
 #[derive(Debug)]
 pub struct OfpEchoReply {
     arbitrary: Vec<u8>,
 }
 
+/// An OpenFlow TLV (Type, Length, Value) for
+/// the OpenFlow Extensible Match format
 #[derive(Debug, Clone)]
 pub struct OfpOxmTlv {
     /// Header class
@@ -127,9 +148,7 @@ pub struct OfpOxmTlv {
     body: Vec<u8>,
 }
 
-/* This is based on the openflow.h from OpenFlow Switch Specification 1.3.5.
- *
- * Copyright (c) 2008 The Board of Trustees of The Leland Stanford Junior University
+/* Copyright (c) 2008 The Board of Trustees of The Leland Stanford Junior University
  * Copyright (c) 2011, 2012 Open Networking Foundation
  *
  * We are making the OpenFlow specification and associated documentation
@@ -163,18 +182,18 @@ pub struct OfpOxmTlv {
  */
 
 /// Version number:
-/// OpenFlow versions released: 0x01 = 1.0 ; 0x02 = 1.1 ; 0x03 = 1.2; 0x04 = 1.3
+/// OpenFlow versions released: 0x01 = 1.0 ; 0x02 = 1.1 ; 0x03 = 1.2; 0x04 = 1.3.
+///
 /// The most significant bit in the version field is reserved and must be set to zero.
 pub const OFP_VERSION: u8 = 0x04;
-
-/// Official IANA registered port for OpenFlow.
-pub const OFP_TCP_PORT: u16 = 6653;
 
 /// Maximum number of physical and logical switch ports. Ports are numbered starting from 1.
 pub const OFPP_MAX: u32 = 0xffff_ff00;
 /// Special value used in some requests when no port is specified (i.e. wildcarded).
 pub const OFPP_ANY: u32 = 0xffff_ffff;
 
+/// A message's type, the most fundamental to
+/// distinguish information between messages
 pub enum OfpType {
     /* Immutable messages. */
     /// Symmetric message
@@ -246,8 +265,9 @@ pub struct OfpSwitchFeatures {
 /* ## OpenFlow Extensible Match. ## */
 /* ## -------------------------- ## */
 
-/// The match type indicates the match structure (set of fields that compose the
-/// match) in use. The match type is placed in the type field at the beginning
+/// The match type indicates the match structure (set of fields that compose the match) in use.
+///
+/// The match type is placed in the type field at the beginning
 /// of all match structures. The "OpenFlow Extensible Match" type corresponds
 /// to OXM TLV format described below and must be supported by all OpenFlow
 /// switches. Extensions that define other match types may be published on the
@@ -258,7 +278,7 @@ pub enum OfpMatchType {
 }
 
 /// Fields to match against flows
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct OfpMatch {
     /// One of OfpMatchType
     typ: u16,
@@ -406,6 +426,7 @@ pub enum OfpErrorType {
 }
 
 /// `OfpErrorMsg` 'code' values for `OfpErrorType::HelloFailed`.
+///
 /// 'data' contains an ASCII text string that may give failure details.
 pub enum OfpHelloFailedCode {
     /// No compatible version.
@@ -413,6 +434,7 @@ pub enum OfpHelloFailedCode {
 }
 
 /// `OfpErrorMsg` 'code' values for `OfpErrorType::BadRequest`.
+///
 /// 'data' contains at least the first 64 bytes of the failed request.
 #[derive(Debug)]
 pub enum OfpBadRequestCode {
@@ -428,12 +450,14 @@ pub enum OfpBadRequestCode {
 /* ## OpenFlow Actions. ## */
 /* ## ----------------- ## */
 
+/// The type of an OpenFlow Action
 pub enum OfpActionType {
     /// Output to switch port.
     Output = 0,
 }
 
 /// Action structure for `OfpActionType::Output`, which sends packets out 'port'.
+///
 /// A `max_len` of zero means no bytes of the packet should be sent to the controller.
 #[derive(Debug)]
 pub struct OfpActionOutput {
@@ -454,6 +478,7 @@ pub struct OfpActionOutput {
 /* ## OpenFlow Instructions. ## */
 /* ## ---------------------- ## */
 
+/// The type of an OpenFlow Instruction
 pub enum OfpInstructionType {
     /// Applies the action(s) immediately
     ApplyActions = 4,
@@ -476,6 +501,7 @@ pub struct OfpInstructionActions {
 /* ## OpenFlow Flow Modification. ## */
 /* ## --------------------------- ## */
 
+/// The command that is embedded in a flow mod message
 #[derive(Clone, Copy)]
 pub enum OfpFlowModCommand {
     /// New flow.
@@ -541,9 +567,11 @@ pub struct OfpFlowMod {
     instructions: Vec<OfpInstructionActions>,
 }
 
+/// A reserved buffer ID to express that no buffer is assigned
 pub const OFP_NO_BUFFER: u32 = 0xffff_ffff;
 
 /// `OfpErrorMsg` 'code' values for `OfpErrorType::BadAction`.
+///
 /// 'data' contains at least the first 64 bytes of the failed request.
 pub enum OfpBadActionCode {
     /// Poblem validating output port
@@ -551,6 +579,7 @@ pub enum OfpBadActionCode {
 }
 
 /// `OfpErrorMsg` 'code' values for `OfpErrorType::FlowModFailed`.
+///
 /// 'data' contains at least the first 64 bytes of the failed request.
 #[derive(Debug)]
 pub enum OfpFlowModFailedCode {

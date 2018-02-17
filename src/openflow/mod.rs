@@ -8,15 +8,12 @@ pub mod error;
 pub mod messages;
 
 use bypass_csv::BypassRecord;
-use conf::OfConnection;
-use conf::OfPort;
-use conf::OfTable;
-use conf::Ports;
+use conf::*;
 
-use openflow::error::*;
+use openflow::error::{Error, Result};
 use openflow::messages::*;
-use openflow::messages::deserialize::*;
-use openflow::messages::serialize::*;
+use openflow::messages::deserialize::Deserialize;
+use openflow::messages::serialize::OfpPacket;
 
 use rand;
 
@@ -46,10 +43,10 @@ enum Stream {
     Tls(TlsStream<TcpStream>),
 }
 impl Stream {
-    fn from(connection: &OfConnection, stream: TcpStream) -> tls_api::Result<Stream> {
+    fn from(_connection: &OfConnection, stream: TcpStream) -> tls_api::Result<Stream> {
         #[cfg(feature = "tls")]
         {
-            if let Some(acc) = connection.tls_acceptor()? {
+            if let Some(acc) = _connection.tls_acceptor()? {
                 return match acc.accept(stream) {
                     Ok(s) => Ok(Stream::Tls(s)),
                     Err(tls_api::HandshakeError::Failure(e)) => Err(e),
@@ -85,10 +82,12 @@ impl Write for Stream {
     }
 }
 
+/// This is the core of the firewall bypass's business logic.
+/// Use the run function to create running instances.
 #[derive(Debug)]
 pub struct OfController<'a> {
     table: &'a OfTable,
-    ports: &'a Ports,
+    ports: &'a OfPorts,
     stream: Stream,
     hello_received: bool,
     records: &'a RefCell<HashSet<BypassRecord>>,
@@ -281,7 +280,7 @@ impl<'a> OfController<'a> {
         listener: &TcpListener,
         connection: &OfConnection,
         table: &OfTable,
-        ports: &Ports,
+        ports: &OfPorts,
         records: &RefCell<HashSet<BypassRecord>>,
     ) -> tls_api::Result<()> {
         let (stream, addr) = listener.accept()?;

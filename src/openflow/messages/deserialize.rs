@@ -1,5 +1,12 @@
+/*!
+All deserialization routines for the OpenFlow message primitives
+
+The header uses a special deserialization because its size is known.
+Use the trait `Deserialize` for any other deserialization implementation.
+*/
+
 use byteorder::{ByteOrder, NetworkEndian};
-use openflow::error::*;
+use openflow::error::{Error, Result};
 use openflow::messages::*;
 
 use std::io;
@@ -40,6 +47,7 @@ pub trait Deserialize {
 }
 
 impl OfpHeader {
+    /// Deserializes an OpenFlow header
     pub fn deserialize(bytes: &[u8; 8]) -> OfpHeader {
         OfpHeader {
             version: bytes[0],
