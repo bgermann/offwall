@@ -43,7 +43,7 @@ use std::fs::File;
 use std::io;
 use std::io::Read;
 use std::iter::IntoIterator;
-use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
+use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::num::ParseIntError;
 use std::str::FromStr;
 use std::vec;
