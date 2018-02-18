@@ -239,8 +239,8 @@ dependencies = [
  "rust-ini 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "simple_logger 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "syslog 3.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "tls-api 0.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
- "tls-api-openssl 0.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tls-api 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tls-api-openssl 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -347,7 +347,7 @@ dependencies = [
 
 [[package]]
 name = "tls-api"
-version = "0.1.13"
+version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "log 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -355,12 +355,12 @@ dependencies = [
 
 [[package]]
 name = "tls-api-openssl"
-version = "0.1.13"
+version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "openssl 0.9.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "openssl-sys 0.9.25 (registry+https://github.com/rust-lang/crates.io-index)",
- "tls-api 0.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tls-api 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -471,8 +471,8 @@ dependencies = [
 "checksum syslog 3.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "bbc9b0acde4f7c05fdc1cfb05239b8a53a66815dd86c67fee5aa9bfac5b4ed42"
 "checksum textwrap 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c0b59b6b4b44d867f1370ef1bd91bfb262bf07bf0ae65c202ea2fbc16153b693"
 "checksum time 0.1.39 (registry+https://github.com/rust-lang/crates.io-index)" = "a15375f1df02096fb3317256ce2cee6a1f42fc84ea5ad5fc8c421cfe40c73098"
-"checksum tls-api 0.1.13 (registry+https://github.com/rust-lang/crates.io-index)" = "0d20cc40863a888b09ae65aa8d95ad33e31a73bffc482d3958a53a4b4bb33873"
-"checksum tls-api-openssl 0.1.13 (registry+https://github.com/rust-lang/crates.io-index)" = "97f5e5ed4fa358c61d00e2cc28b76f535be0ecd9f6cfb66ef997dabf333e4e60"
+"checksum tls-api 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)" = "a2424af93d25301cead84cc8225f119918e63d44ee494a0209338dcf7d1eec18"
+"checksum tls-api-openssl 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)" = "3eaee8b4f183293dbeb7db18f0fd44f2faeda9b17324b94c49c69a484a46e5c7"
 "checksum unicode-width 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "bf3a113775714a22dcb774d8ea3655c53a32debae63a063acc00a91cc586245f"
 "checksum unix_socket 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "6aa2700417c405c38f5e6902d699345241c28c0b7ade4abaad71e35a87eb1564"
 "checksum vcpkg 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "9e0a7d8bed3178a8fb112199d466eeca9ed09a14ba8ad67718179b4fd5487d0b"

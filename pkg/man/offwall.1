@@ -8,6 +8,10 @@ offwall \- A simple, CSV-reading OpenFlow controller dedicated to firewall bypas
 OFFWall is an OpenFlow 1.3 compatible controller dedicated to firewall bypassing via CSV files.
 It only implements the features that are needed to proactively install flow entries onto one connected switch.
 .PP
+Instead of running OFFWall directly its \fBsmf(5)\fR service can be used.
+E.g., it can be started via \fIsvcadm enable offwall:default\fR.
+The default settings can be changed via \fBsvccfg(1M)\fR.
+.PP
 The flow entries are generated from the given \fIcsv\fR file that is expected to have \fBoffwall.csv\fR(4) syntax.
 The file is watched for changes.
 When it is changed, the flow entries are modified accordingly.
@@ -37,6 +41,9 @@ The \fIini\fR configuration file expects a file with \fBoffwall.ini\fR(4) syntax
 .B RUST_BACKTRACE
 If set to a value different from "0" and the program panics, a backtrace is produced.
 .SH "SEE ALSO"
-.BR offwall.ini (4),
 .BR offwall.csv (4),
+.BR offwall.ini (4),
+.BR smf (5),
+.BR svcadm (1M),
+.BR svccfg (1M),
 .BR syslog (3)
