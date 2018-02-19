@@ -144,10 +144,7 @@ fn handle_cli_args() -> io::Result<()> {
         simple_logger::init_with_level(log_lvl).expect("error on logging initialization");
     }
 
-    let csv_path = matches
-        .value_of("csv")
-        .expect("csv argument missing")
-        .to_string();
+    let csv_path = matches.value_of("csv").unwrap().to_string();
     let conf_path = matches.value_of("conf").unwrap();
 
     let (conn, table, ports, inside_net) = conf::parse_file(conf_path)?;
@@ -167,7 +164,7 @@ fn handle_cli_args() -> io::Result<()> {
                 // exit the parent process
                 exit(0);
             }
-            let pid_path = matches.value_of("pid").expect("pid file path missing");
+            let pid_path = matches.value_of("pid").unwrap();
             let mut file = File::create(pid_path)?;
             write!(file, "{}", pid)?;
         }
