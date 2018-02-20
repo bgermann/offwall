@@ -3,7 +3,7 @@
 offwall \- A simple, CSV-reading OpenFlow controller dedicated to firewall bypassing
 .SH SYNOPSIS
 .B offwall
-[\fB\-h\fR] [\fB\-s\fR] [\fB\-v\fR ...] [\fB\-V\fR] \fB\-c\fR \fIini\fR \fIcsv\fR
+[\fB\-h\fR] [\fB\-p\fR \fIfile\fR] [\fB\-s\fR] [\fB\-v\fR ...] [\fB\-V\fR] \fB\-c\fR \fIini\fR \fIcsv\fR
 .SH DESCRIPTION
 OFFWall is an OpenFlow 1.3 compatible controller dedicated to firewall bypassing via CSV files.
 It only implements the features that are needed to proactively install flow entries onto one connected switch.
@@ -20,8 +20,9 @@ When it is changed, the flow entries are modified accordingly.
 \fB\-h\fR, \fB\-\-help\fR
 Prints help information.
 .TP
-\fB\-d\fR, \fB\-\-daemonize\fR
-Runs the process as daemon.
+\fB\-p\fR, \fB\-\-pid\fR \fIfile\fR
+Daemonizes the process (forks a child process and returns early) and writes a PID \fIfile\fR.
+Should be used with syslog.
 .TP
 \fB\-s\fR, \fB\-\-syslog\fR
 Logs via syslog.
