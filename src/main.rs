@@ -58,7 +58,7 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::time::Duration;
 
-const NOTIFY_SECONDS: u64 = 2;
+const NOTIFY_SECONDS: u64 = 1;
 
 /// Registers a file as notify target.
 /// If the registering fails, the file is tried to be reregistered infinitely.
