@@ -206,10 +206,8 @@ impl FromStr for ConnectionProtocol {
 
 /// Each struct that represents one [Section] of
 /// the INI file has to implement the Section trait
-trait Section {
-    type S;
-
-    fn from_ini(conf: &Ini) -> Result<Self::S, Error>;
+trait Section<S> {
+    fn from_ini(conf: &Ini) -> Result<S, Error>;
 }
 
 /// Contains the parsed information from an OpenFlow Connection URI and the
@@ -240,10 +238,8 @@ impl OfConnection {
         })
     }
 }
-impl Section for OfConnection {
-    type S = OfConnection;
-
-    fn from_ini(conf: &Ini) -> Result<Self::S, Error> {
+impl Section<OfConnection> for OfConnection {
+    fn from_ini(conf: &Ini) -> Result<OfConnection, Error> {
         debug!("Reading [{}] section", CONN_SECTION);
 
         match conf.section(Some(CONN_SECTION.to_owned())) {
@@ -323,10 +319,8 @@ impl FromStr for OfPort {
     }
 }
 
-impl Section for OfPorts {
-    type S = OfPorts;
-
-    fn from_ini(conf: &Ini) -> Result<Self::S, Error> {
+impl Section<OfPorts> for OfPorts {
+    fn from_ini(conf: &Ini) -> Result<OfPorts, Error> {
         debug!("Reading [{}] section", PORTS_SECTION);
 
         let ports_section = conf.section(Some(PORTS_SECTION.to_owned()))
@@ -404,10 +398,8 @@ impl<'a> IntoIterator for &'a OfPorts {
     }
 }
 
-impl Section for Ipv4Network {
-    type S = Ipv4Network;
-
-    fn from_ini(conf: &Ini) -> Result<Self::S, Error> {
+impl Section<Ipv4Network> for Ipv4Network {
+    fn from_ini(conf: &Ini) -> Result<Ipv4Network, Error> {
         debug!("Reading [{}] section", NET_SECTION);
 
         let net_section = conf.section(Some(NET_SECTION.to_owned()))
@@ -425,10 +417,8 @@ impl Section for Ipv4Network {
     }
 }
 
-impl Section for OfTable {
-    type S = OfTable;
-
-    fn from_ini(conf: &Ini) -> Result<Self::S, Error> {
+impl Section<OfTable> for OfTable {
+    fn from_ini(conf: &Ini) -> Result<OfTable, Error> {
         debug!("Reading [{}] section", TABLE_SECTION);
 
         let table = match conf.section(Some(TABLE_SECTION.to_owned())) {
