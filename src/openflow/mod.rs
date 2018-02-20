@@ -26,8 +26,10 @@ use std::net::{TcpListener, TcpStream};
 use std::sync::mpsc::{Receiver, TryRecvError};
 use std::time::{Duration, Instant};
 
+#[cfg(feature = "tls")]
+use tls_api::TlsAcceptor;
 use tls_api;
-use tls_api::{TlsAcceptor, TlsStream};
+use tls_api::TlsStream;
 
 const BASIC_FLOW_PRIORITY: u16 = 1;
 const FLOW_REFRESH_SECS: u64 = 3600;
