@@ -24,6 +24,9 @@ If it is `*`, the port numbers also have to be `*`.
 
 use ipnetwork::{IpNetworkError, Ipv4Network};
 
+use notify;
+use notify::{DebouncedEvent, RecursiveMode, Watcher};
+
 use std::collections::HashSet;
 use std::convert::From;
 use std::error;
@@ -32,6 +35,12 @@ use std::fs::File;
 use std::io;
 use std::io::prelude::*;
 use std::str::FromStr;
+use std::sync::mpsc;
+use std::sync::mpsc::{Receiver, Sender};
+use std::time::Duration;
+
+/// The polling frequency
+const NOTIFY_SECONDS: u64 = 1;
 
 /// The CSV delimiter.
 const DELIMITER: char = ';';
@@ -343,5 +352,50 @@ impl CsvParser {
         }
 
         Ok(bypass_records)
+    }
+
+    /// Registers a file as notify target.
+    /// If the registering fails, the file is tried to be reregistered infinitely.
+    pub fn watch_file(&self, record_tx: &Sender<HashSet<BypassRecord>>) {
+        loop {
+            let (tx, rx) = mpsc::channel();
+            if let Ok(mut watcher) = notify::watcher(tx, Duration::from_secs(NOTIFY_SECONDS)) {
+                if watcher
+                    .watch(&self.path(), RecursiveMode::NonRecursive)
+                    .is_ok()
+                {
+                    info!("Watching file {}", self.path());
+                    match self.handle_file_events(&rx, record_tx) {
+                        Ok(_) => warn!("file watch removed"),
+                        Err(e) => error!("{}", e),
+                    }
+                }
+            }
+        }
+    }
+
+    /// Reads inode events and parses the corresponding file.
+    /// If the inode is removed, it is unregistered from notify.
+    fn handle_file_events(
+        &self,
+        rx: &Receiver<DebouncedEvent>,
+        tx: &Sender<HashSet<BypassRecord>>,
+    ) -> notify::Result<()> {
+        loop {
+            match rx.recv().expect("inter-thread communication failed") {
+                DebouncedEvent::NoticeRemove(_) | DebouncedEvent::Remove(_) => {
+                    return Ok(());
+                }
+                DebouncedEvent::Error(error, _) => {
+                    return Err(error);
+                }
+                _ => match self.parse_file() {
+                    Ok(recs) => tx.send(recs).expect("inter-thread communication failed"),
+                    Err(io_err) => {
+                        return Err(notify::Error::Io(io_err));
+                    }
+                },
+            }
+        }
     }
 }

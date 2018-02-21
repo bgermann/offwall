@@ -39,71 +39,18 @@ pub mod bypass_csv;
 pub mod conf;
 pub mod openflow;
 
-use bypass_csv::BypassRecord;
 use bypass_csv::CsvParser;
-
-use notify::{DebouncedEvent, RecursiveMode, Watcher};
 
 use openflow::OfController;
 
 use std::cell::RefCell;
-use std::collections::HashSet;
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
 use std::net;
 use std::process::exit;
 use std::sync::mpsc;
-use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
-use std::time::Duration;
-
-const NOTIFY_SECONDS: u64 = 1;
-
-/// Registers a file as notify target.
-/// If the registering fails, the file is tried to be reregistered infinitely.
-fn register_bypass_file(parser: &CsvParser, record_tx: &Sender<HashSet<BypassRecord>>) {
-    loop {
-        let (tx, rx) = mpsc::channel();
-        if let Ok(mut watcher) = notify::watcher(tx, Duration::from_secs(NOTIFY_SECONDS)) {
-            if watcher
-                .watch(&parser.path(), RecursiveMode::NonRecursive)
-                .is_ok()
-            {
-                info!("Watching file {}", parser.path());
-                match handle_file_events(&rx, parser, record_tx) {
-                    Ok(_) => warn!("file watch removed"),
-                    Err(e) => error!("{}", e),
-                }
-            }
-        }
-    }
-}
-
-/// Reads inode events and parses the corresponding file.
-/// If the inode is removed, it is unregistered from notify.
-fn handle_file_events(
-    rx: &Receiver<DebouncedEvent>,
-    parser: &CsvParser,
-    tx: &Sender<HashSet<BypassRecord>>,
-) -> notify::Result<()> {
-    loop {
-        match rx.recv().expect("inter-thread communication failed") {
-            DebouncedEvent::NoticeRemove(_) | DebouncedEvent::Remove(_) => {
-                return Ok(());
-            }
-            DebouncedEvent::Error(error, _) => {
-                return Err(error);
-            }
-            _ => match parser.parse_file() {
-                Ok(recs) => tx.send(recs).expect("inter-thread communication failed"),
-                Err(io_err) => {
-                    return Err(notify::Error::Io(io_err));
-                }
-            },
-        }
-    }
-}
 
 /// Reads command line arguments and sets the program up as intended.
 /// Spawns a new thread to watch the bypass file.
@@ -174,7 +121,7 @@ fn handle_cli_args() -> io::Result<()> {
     info!("Listening on {}", listen_socket.local_addr()?);
 
     let (tx, rx) = mpsc::channel();
-    thread::spawn(move || register_bypass_file(&csv_parser, &tx));
+    thread::spawn(move || csv_parser.watch_file(&tx));
 
     loop {
         if let Err(e) = OfController::run(&rx, &listen_socket, &conn, &table, &ports, &records) {
