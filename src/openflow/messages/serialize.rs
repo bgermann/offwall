@@ -130,7 +130,7 @@ impl OfpOxmTlv {
 }
 
 impl OfpActionOutput {
-    /// Constructs an OfpActionOutput
+    /// Constructs an `OfpActionOutput`
     pub fn new(port: u32) -> OfpActionOutput {
         OfpActionOutput {
             typ: OfpActionType::Output as u16,
@@ -223,6 +223,7 @@ pub trait OfpPacket {
         let mut body = vec![];
         self.serialize_body(&mut body)?;
         let header = self.header(body.len(), xid);
+        debug!("Outgoing message: {:?}", header);
         header.serialize(stream)?;
         stream.write_all(&body)
     }

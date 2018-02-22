@@ -121,7 +121,7 @@ impl<'a> OfController<'a> {
             instr,
         );
 
-        trace!("Outgoing message: {:?}", flow_mod);
+        trace!("Outgoing message body: {:?}", flow_mod);
         flow_mod.serialize(&mut self.stream, gen_xid())
     }
 

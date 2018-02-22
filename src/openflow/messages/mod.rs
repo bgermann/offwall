@@ -461,7 +461,7 @@ pub enum OfpActionType {
 /// A `max_len` of zero means no bytes of the packet should be sent to the controller.
 #[derive(Debug)]
 pub struct OfpActionOutput {
-    /// OfpActionType::Output.
+    /// One of `OfpActionType::Output`.
     typ: u16,
     /// Length is 16. The length includes the header and
     /// any padding used to make the action 64-bit aligned.
@@ -487,7 +487,7 @@ pub enum OfpInstructionType {
 /// Instruction structure for `OfpInstructionType::ApplyActions`
 #[derive(Debug)]
 pub struct OfpInstructionActions {
-    /// One of OfpInstructionType
+    /// One of `OfpInstructionType`
     typ: u16,
     // len: Length of this struct in bytes. The length includes the header
     // and any padding used to make the instruction 64-bit aligned.

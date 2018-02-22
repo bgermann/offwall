@@ -50,10 +50,12 @@ const COMMENT: char = '#';
 
 /// Represents all errors that can occur while
 /// parsing a CSV file with firewall bypass rules
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Error {
     /// A line does not have exactly 5 values
     ValueCount(String),
+    /// A line does have an empty value
+    EmptyValue(String),
     /// An invalid CIDR form occured
     InvalidCidr(IpNetworkError, String),
     /// A UDP or TCP number is invalid
@@ -77,6 +79,9 @@ impl fmt::Display for Error {
         match *self {
             Error::ValueCount(ref s) => {
                 write!(f, "The following line does not have exactly 5 values: {}", s)
+            }
+            Error::EmptyValue(ref s) => {
+                write!(f, "The following line has an empty value: {}", s)
             }
             Error::InvalidCidr(ref e, ref s) => {
                 write!(f, "{} -- Violating line: {}", e, s)
@@ -239,13 +244,6 @@ impl CsvParser {
     /// src_ip or dst_ip has to be in `inside_net`.
     /// Dependent on this the output_port is set.
     /// The corresponding `BypassRecord` and its reverse are returned.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let p = parse_line("# comment");
-    /// assert_eq!(Ok(None));
-    /// ```
     fn parse_line(&self, line: &str) -> Result<Vec<BypassRecord>, Error> {
         if line.is_empty() || line.starts_with(COMMENT) {
             return Ok(Vec::with_capacity(0));
@@ -256,6 +254,7 @@ impl CsvParser {
             let trimmed = match item.trim() {
                 // check wildcard
                 "*" => None,
+                "" => return Err(Error::EmptyValue(line.to_string())),
                 trm => Some(trm),
             };
             csv_elems.push(trimmed);
@@ -398,4 +397,71 @@ impl CsvParser {
             }
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_parser() -> CsvParser {
+        CsvParser::new(
+            "".to_string(),
+            Ipv4Network::from_str("192.0.2.0/24").unwrap(),
+        )
+    }
+
+    #[test]
+    fn wrong_value_count() {
+        let testee = test_parser().parse_line("a");
+        assert_eq!(Error::ValueCount("a".to_string()), testee.unwrap_err());
+    }
+
+    #[test]
+    fn empty_value() {
+        let testee = test_parser().parse_line("a;b;c;d;");
+        let expected = Error::EmptyValue("a;b;c;d;".to_string());
+        assert_eq!(expected, testee.unwrap_err());
+    }
+
+    #[test]
+    fn invaid_cidr() {
+        let line = "192.0.2.0/50;*;*;*;*";
+        let testee = test_parser().parse_line(line);
+        let expected = Error::InvalidCidr(IpNetworkError::InvalidPrefix, line.to_string());
+        assert_eq!(expected, testee.unwrap_err());
+    }
+
+    #[test]
+    fn port_too_big() {
+        let testee = test_parser().parse_line("*;70000;*;*;TCP");
+        let expected = Error::InvalidPortNumber("70000".to_string());
+        assert_eq!(expected, testee.unwrap_err());
+    }
+
+    #[test]
+    fn port_too_small() {
+        let testee = test_parser().parse_line("*;-1;*;*;TCP");
+        let expected = Error::InvalidPortNumber("-1".to_string());
+        assert_eq!(expected, testee.unwrap_err());
+    }
+
+    #[test]
+    fn invalid_protocol() {
+        let testee = test_parser().parse_line("*;*;*;*;fail");
+        let expected = Error::InvalidProtocol("fail".to_string());
+        assert_eq!(expected, testee.unwrap_err());
+    }
+
+    #[test]
+    fn comment() {
+        let testee = test_parser().parse_line("# comment");
+        assert!(testee.unwrap().is_empty());
+    }
+
+    #[test]
+    fn empty() {
+        let testee = test_parser().parse_line("");
+        assert!(testee.unwrap().is_empty());
+    }
+
 }
