@@ -157,7 +157,13 @@ mod tests {
     fn min_lengths() {
         assert_eq!(0, OfpEchoRequest::min_length());
         assert_eq!(24, OfpSwitchFeatures::min_length());
-        assert_eq!(24, OfpSwitchFeatures::max_length());
         assert_eq!(4, OfpErrorMsg::min_length());
+    }
+
+    #[test]
+    fn max_lengths() {
+        assert_eq!(0xFFF7, OfpEchoRequest::max_length());
+        assert_eq!(24, OfpSwitchFeatures::max_length());
+        assert_eq!(0xFFF7, OfpErrorMsg::max_length());
     }
 }

@@ -207,6 +207,7 @@ impl FromStr for ConnectionProtocol {
 /// Each struct that represents one [Section] of
 /// the INI file has to implement the Section trait
 trait Section<S> {
+    /// Reads one INI section and converts it to the assigned data type
     fn from_ini(conf: &Ini) -> Result<S, Error>;
 }
 
@@ -216,7 +217,8 @@ trait Section<S> {
 pub struct OfConnection {
     proto: ConnectionProtocol,
     socket: SocketAddr,
-    /// None for TCP connections, Some(...) for TLS connections
+    /// None for TCP connections, Some((bytes, password)) for TLS connections.
+    /// bytes contains a PKCS #12 archive with private key + certificate chain.
     pkcs12: Option<(Vec<u8>, String)>,
 }
 impl OfConnection {

@@ -9,7 +9,7 @@ You can place a `*` if you want to express a wildcard.
 A record consisting only of wildcards is not allowed.
 Whitespaces surrounding the values are ignored.
 
-Each line consists of a 5-tupel describing a connection
+Each line consists of a 5-tuple describing a connection
 that is to bypass, e.g.
 
 ```csv
@@ -186,6 +186,8 @@ impl BypassRecord {
         self.direction
     }
 
+    /// Returns a `BypassRecord` with its source fields being
+    /// set to the original destination fields and vice versa.
     fn reverse_direction(&self) -> BypassRecord {
         let direction = match self.direction {
             Direction::Inside => Direction::Outside,

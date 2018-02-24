@@ -1,7 +1,8 @@
 /*!
 Implements an OpenFlow Controller with protocol version 0x04 compatibility.
 It provides only a small subset of the OpenFlow features to push some rules
-to a switch proactively.
+to a switch proactively and remove them based on a rule set which is consumed
+from a channel.
 */
 
 pub mod error;
@@ -37,6 +38,9 @@ const FLOW_REFRESH_SECS: u64 = 3600;
 fn gen_xid() -> u32 {
     rand::random()
 }
+
+/// A facade for `TcpStream` and `TlsStream` to
+/// allow a common use across the controller
 #[derive(Debug)]
 enum Stream {
     Tcp(TcpStream),
@@ -96,6 +100,9 @@ pub struct OfController<'a> {
 }
 
 impl<'a> OfController<'a> {
+    /// Constructs and sends an `OfpFlowMod` based on `match_field` augmented by
+    /// a match on `input_port` and an `OfpActionOutput` based on `output_port`.
+    /// Should be used by every flow mod sending method across this struct.
     fn send_flow_mod(
         &mut self,
         cmd: OfpFlowModCommand,
@@ -123,6 +130,8 @@ impl<'a> OfController<'a> {
         flow_mod.serialize(&mut self.stream, gen_xid())
     }
 
+    /// Sends four flow mods to establish a default route via the
+    /// firewall as a default for every switch-received frame
     fn send_basic_flow_mods(&mut self) -> io::Result<()> {
         let p = self.ports;
         let cmd = OfpFlowModCommand::Add;
@@ -133,6 +142,7 @@ impl<'a> OfController<'a> {
         self.send_flow_mod(cmd, OfpMatch::new(), p.fw_out(), p.outside(), prio)
     }
 
+    /// Converts a set of `BypassRecord`s to matches and sends flow mods based on them
     fn send_bypass_flow_mods(
         &mut self,
         cmd: OfpFlowModCommand,
@@ -146,6 +156,7 @@ impl<'a> OfController<'a> {
         Ok(())
     }
 
+    /// Deserializes a OpenFlow message's body and reacts to it
     fn handle_ofp_message(&mut self, header: &OfpHeader) -> Result<()> {
         debug!("Incoming message: {:?}", header);
 
@@ -245,6 +256,9 @@ impl<'a> OfController<'a> {
         Ok(())
     }
 
+    /// Sends OpenFlow errors based on an OpenFlow-related `error`.
+    /// Emits `std::io::Error`s for serious errors that
+    /// do not allow continuing controller operation.
     fn handle_ofp_errors(
         &mut self,
         error: Error,

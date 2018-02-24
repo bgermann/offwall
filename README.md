@@ -3,8 +3,8 @@
 OFFWall is an OpenFlow 1.3 compatible controller dedicated to firewall bypassing via CSV files.
 It only implements the features that are needed to proactively install flow entries onto a connected switch.
 
-This Rust software project is part of Bastian Germann's Master thesis, which explains it in detail:
-Implementation of a reduced OpenFlow Controller for firewall bypassing in practice.
+This Rust crate is part of Bastian Germann's Master thesis, which explains it in detail:
+Implementierung eines reduzierten OpenFlow Controller für Firewall Bypassing in der Praxis.
 
 You can find information about compiling and packaging in [INSTALL.md](INSTALL.md).
 
