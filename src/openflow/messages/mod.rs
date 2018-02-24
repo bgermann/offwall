@@ -335,14 +335,14 @@ impl OfpOxmTlv {
     /// Format: 32-bit integer in network byte order.
     /// Masking: Arbitrary masks.
     pub fn new_ipv4(cidr: &Ipv4Network, endpoint: &ProtocolEndpoint) -> OfpOxmTlv {
-        let direction = match *endpoint {
+        let field = match *endpoint {
             ProtocolEndpoint::Src => OxmOfbMatchFields::Ipv4Src,
             ProtocolEndpoint::Dst => OxmOfbMatchFields::Ipv4Dst,
         };
         let mut oxm_val_and_mask = vec![];
         oxm_val_and_mask.extend_from_slice(&cidr.network().octets());
         oxm_val_and_mask.extend_from_slice(&cidr.mask().octets());
-        OfpOxmTlv::new(direction, true, oxm_val_and_mask)
+        OfpOxmTlv::new(field, true, oxm_val_and_mask)
     }
 
     /// The source or destination port in the TCP/UDP header.

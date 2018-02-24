@@ -30,11 +30,6 @@ impl OfpHeader {
         size_of::<OfpHeader>()
     }
 
-    /// Returns the body length in byte
-    pub fn body_length(&self) -> usize {
-        self.length as usize - OfpHeader::header_length()
-    }
-
     /// Serializes this header on the given stream
     pub fn serialize<S: Write>(&self, stream: &mut S) -> io::Result<()> {
         stream.write_all(&[self.version, self.typ])?;

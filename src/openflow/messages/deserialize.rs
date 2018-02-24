@@ -12,6 +12,23 @@ use openflow::messages::*;
 use std::io;
 use std::mem::size_of;
 
+impl OfpHeader {
+    /// Deserializes an OpenFlow header
+    pub fn deserialize(bytes: &[u8; 8]) -> OfpHeader {
+        OfpHeader {
+            version: bytes[0],
+            typ: bytes[1],
+            length: NetworkEndian::read_u16(&bytes[2..4]),
+            xid: NetworkEndian::read_u32(&bytes[4..]),
+        }
+    }
+
+    /// Returns the body length in byte
+    pub fn body_length(&self) -> usize {
+        self.length as usize - OfpHeader::header_length()
+    }
+}
+
 /// To be implemented by all OpenFlow message parts that are received.
 pub trait Deserialize {
     /// The type to deserialize
@@ -26,7 +43,7 @@ pub trait Deserialize {
         Self::deserialize_len_ok(bytes)
     }
 
-    /// Deserializes the byte buffer
+    /// Deserializes the byte buffer (network byte order)
     /// Implementers can rely on the bytes buffer's size to be greater or equal Self::min_length()
     fn deserialize_len_ok(bytes: Vec<u8>) -> Result<Self::R>;
 
@@ -43,18 +60,6 @@ pub trait Deserialize {
     /// override this implementation.
     fn max_length() -> usize {
         0xffff - OfpHeader::header_length()
-    }
-}
-
-impl OfpHeader {
-    /// Deserializes an OpenFlow header
-    pub fn deserialize(bytes: &[u8; 8]) -> OfpHeader {
-        OfpHeader {
-            version: bytes[0],
-            typ: bytes[1],
-            length: NetworkEndian::read_u16(&bytes[2..4]),
-            xid: NetworkEndian::read_u32(&bytes[4..]),
-        }
     }
 }
 

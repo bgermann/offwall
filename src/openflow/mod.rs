@@ -35,9 +35,7 @@ const BASIC_FLOW_PRIORITY: u16 = 1;
 const FLOW_REFRESH_SECS: u64 = 3600;
 
 fn gen_xid() -> u32 {
-    let xid = rand::random();
-    trace!("Using xid {} for the outgoing message", xid);
-    xid
+    rand::random()
 }
 #[derive(Debug)]
 enum Stream {
@@ -125,7 +123,7 @@ impl<'a> OfController<'a> {
         flow_mod.serialize(&mut self.stream, gen_xid())
     }
 
-    fn add_basic_flow_mods(&mut self) -> io::Result<()> {
+    fn send_basic_flow_mods(&mut self) -> io::Result<()> {
         let p = self.ports;
         let cmd = OfpFlowModCommand::Add;
         let prio = BASIC_FLOW_PRIORITY;
@@ -187,7 +185,7 @@ impl<'a> OfController<'a> {
             let async_conf = OfpAsyncConfig::default();
             async_conf.serialize(&mut self.stream, gen_xid())?;
 
-            self.add_basic_flow_mods()?;
+            self.send_basic_flow_mods()?;
 
             self.send_bypass_flow_mods(OfpFlowModCommand::Add, &self.records.borrow())?;
         }
@@ -210,11 +208,8 @@ impl<'a> OfController<'a> {
             }
         }
         else {
-            debug!(
-                "Cannot interpret message of type {}. Full message body: {:?}",
-                header.typ(),
-                buf
-            );
+            warn!("Cannot interpret message of type {}.", header.typ());
+            debug!("Full message body: {:?}", buf);
             return Err(Error::BadRequest(OfpBadRequestCode::BadType, buf));
         }
         Ok(())
@@ -250,7 +245,7 @@ impl<'a> OfController<'a> {
         Ok(())
     }
 
-    fn handle_of_errors(
+    fn handle_ofp_errors(
         &mut self,
         error: Error,
         header: &OfpHeader,
@@ -312,8 +307,8 @@ impl<'a> OfController<'a> {
             ctrl.stream.read_exact(&mut hbuf)?;
             let header = OfpHeader::deserialize(&hbuf);
             let msg_res = ctrl.handle_ofp_message(&header);
-            if msg_res.is_err() {
-                ctrl.handle_of_errors(msg_res.unwrap_err(), &header, &hbuf)?;
+            if let Err(err) = msg_res {
+                ctrl.handle_ofp_errors(err, &header, &hbuf)?;
             }
             if ctrl.hello_received {
                 ctrl.handle_bypass_records()?;
