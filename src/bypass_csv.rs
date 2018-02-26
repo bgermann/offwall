@@ -361,10 +361,8 @@ impl CsvParser {
         loop {
             let (tx, rx) = mpsc::channel();
             if let Ok(mut watcher) = notify::watcher(tx, Duration::from_secs(NOTIFY_SECONDS)) {
-                if watcher
-                    .watch(&self.path(), RecursiveMode::NonRecursive)
-                    .is_ok()
-                {
+                let watch_res = watcher.watch(&self.path(), RecursiveMode::NonRecursive);
+                if watch_res.is_ok() {
                     info!("Watching file {}", self.path());
                     match self.handle_file_events(&rx, record_tx) {
                         Ok(_) => warn!("file watch removed"),

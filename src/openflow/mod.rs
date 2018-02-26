@@ -259,7 +259,7 @@ impl<'a> OfController<'a> {
     /// Sends OpenFlow errors based on an OpenFlow-related `error`.
     /// Emits `std::io::Error`s for serious errors that
     /// do not allow continuing controller operation.
-    fn handle_ofp_errors(
+    fn handle_ofp_error(
         &mut self,
         error: Error,
         header: &OfpHeader,
@@ -269,11 +269,12 @@ impl<'a> OfController<'a> {
             Error::Io(e) => return Err(e),
             Error::HelloFailed => {
                 let msg = format!(
-                    "The connected switch supports only OpenFlow protocol version {:x}",
+                    "The connected switch supports OpenFlow protocol version {:x}",
                     header.version()
                 );
                 let err = OfpErrorMsg::new_hello_failed();
                 err.serialize(&mut self.stream, header.xid())?;
+                // Terminate the connection
                 return Err(io::Error::new(io::ErrorKind::BrokenPipe, msg));
             }
             Error::BadRequest(code, buf) => OfpErrorMsg::new_bad_request(code, header_buf, &buf),
@@ -322,7 +323,7 @@ impl<'a> OfController<'a> {
             let header = OfpHeader::deserialize(&hbuf);
             let msg_res = ctrl.handle_ofp_message(&header);
             if let Err(err) = msg_res {
-                ctrl.handle_ofp_errors(err, &header, &hbuf)?;
+                ctrl.handle_ofp_error(err, &header, &hbuf)?;
             }
             if ctrl.hello_received {
                 ctrl.handle_bypass_records()?;

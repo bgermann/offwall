@@ -1,7 +1,10 @@
 /*!
-A simple, CSV-reading OpenFlow controller dedicated to firewall bypassing.
+A simple, CSV-reading OpenFlow Controller dedicated to firewall bypassing.
 
 The controller supports exactly one switch.
+It involves two threads running.
+One watches a CSV file for bypass rules and one implements the OpenFlow Controller using a TCP or TLS socket.
+
 You can use mininet as a test switch.
 To spawn an instance with 4 ports you can run:
 
@@ -9,8 +12,6 @@ To spawn an instance with 4 ports you can run:
 # mn --controller remote,port=6653 --topo single,4 --switch ovs,protocols=OpenFlow13
 ```
 */
-
-#![warn(missing_docs)]
 
 extern crate byteorder;
 #[macro_use]

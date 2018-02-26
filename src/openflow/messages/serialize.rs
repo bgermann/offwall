@@ -223,8 +223,8 @@ pub trait OfpPacket {
         stream.write_all(&body)
     }
 
-    /// Serializes this packet's body.
-    /// Implementers have to output network byte order on the given stream.
+    /// Serializes this packet's body. Implementers have
+    /// to output network byte order on the given stream.
     fn serialize_body<S: Write>(&self, stream: &mut S) -> io::Result<()>;
 }
 
