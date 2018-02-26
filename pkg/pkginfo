@@ -2,6 +2,6 @@ ARCH="sparc"
 CATEGORY="application"
 NAME="The OFFWall OpenFlow controller for firewall bypassing"
 PKG="offwall"
-VERSION="0.8.0"
+VERSION="0.9.0"
 CLASSES=manifest preserve none
 VENDOR="Bastian Germann"
