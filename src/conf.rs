@@ -467,3 +467,19 @@ pub fn parse_file(path: &str) -> Result<(OfConnection, OfTable, OfPorts, Ipv4Net
         Ipv4Network::from_ini(&conf)?,
     ))
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn proto_tcp() {
+        assert_eq!(ConnectionProtocol::Tcp, ConnectionProtocol::from_str("tcp").unwrap());
+    }
+
+    #[test]
+    fn wrong_proto() {
+        OfConnection::from_str("fail").unwrap_err();
+    }
+}
