@@ -402,12 +402,30 @@ impl CsvParser {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::net::Ipv4Addr;
 
     fn test_parser() -> CsvParser {
         CsvParser::new(
             "".to_string(),
-            Ipv4Network::from_str("192.0.2.0/24").unwrap(),
+            Ipv4Network::from_str("192.0.2.0/28").unwrap(),
         )
+    }
+
+    #[test]
+    fn parse_complete_line() {
+        let testee = test_parser().parse_line("192.0.1.0/24; *; 192.0.2.10/32; 80; TCP");
+        let src_ip = Ipv4Network::new(Ipv4Addr::new(192, 0, 1, 0), 24).unwrap();
+        let dst_ip = Ipv4Network::new(Ipv4Addr::new(192, 0, 2, 10), 32).unwrap();
+        let expected = BypassRecord {
+            src_ip: Some(src_ip),
+            src_port: None,
+            dst_ip: Some(dst_ip),
+            dst_port: Some(80),
+            proto: Some(IpProtocol::Tcp),
+            direction: Direction::Inside,
+        };
+        let rev = expected.reverse_direction();
+        assert_eq!(vec![expected, rev], testee.unwrap());
     }
 
     #[test]

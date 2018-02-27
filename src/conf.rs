@@ -468,14 +468,14 @@ pub fn parse_file(path: &str) -> Result<(OfConnection, OfTable, OfPorts, Ipv4Net
     ))
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn proto_tcp() {
-        assert_eq!(ConnectionProtocol::Tcp, ConnectionProtocol::from_str("tcp").unwrap());
+        let testee = ConnectionProtocol::from_str("tcp").unwrap();
+        assert_eq!(ConnectionProtocol::Tcp, testee);
     }
 
     #[test]
