@@ -239,7 +239,9 @@ impl CsvParser {
 
     /// Checks for `ip_net` to be in `self.inside_net`
     fn in_inside_net(&self, ip_net: Option<Ipv4Network>) -> bool {
-        ip_net.map_or(false, |ip| self.inside_net.contains(ip.network()))
+        ip_net.map_or(false, |ip| {
+            self.inside_net.contains(ip.network()) && self.inside_net.prefix() <= ip.prefix()
+        })
     }
 
     /// Parses one CSV line and validates it semantically.
@@ -413,8 +415,8 @@ mod tests {
 
     #[test]
     fn parse_complete_line() {
-        let testee = test_parser().parse_line("192.0.1.0/24; *; 192.0.2.10/32; 80; TCP");
-        let src_ip = Ipv4Network::new(Ipv4Addr::new(192, 0, 1, 0), 24).unwrap();
+        let testee = test_parser().parse_line("192.0.2.0/24; *; 192.0.2.10/32; 80; TCP");
+        let src_ip = Ipv4Network::new(Ipv4Addr::new(192, 0, 2, 0), 24).unwrap();
         let dst_ip = Ipv4Network::new(Ipv4Addr::new(192, 0, 2, 10), 32).unwrap();
         let expected = BypassRecord {
             src_ip: Some(src_ip),
