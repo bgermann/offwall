@@ -1,6 +1,6 @@
 [package]
 name = "offwall"
-version = "0.9.0"
+version = "1.0.0"
 authors = ["Bastian Germann"]
 license = "GPL-3.0+"
 repository = "https://github.com/bgermann/offwall"
