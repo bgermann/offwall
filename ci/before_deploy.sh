@@ -18,7 +18,7 @@ main() {
     test -f Cargo.lock || cargo generate-lockfile
 
     # Update this to build the artifacts that matter to you
-    cross rustc --bin offwall --target $TARGET --release -- -C lto
+    cross rustc --bin offwall --target $TARGET --release --all-features -- -C lto
 
     # Update this to package the right artifacts
     cp target/$TARGET/release/offwall $stage/
