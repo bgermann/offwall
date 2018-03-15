@@ -19,9 +19,9 @@ matrix:
   include:
     # Android
     #- env: TARGET=aarch64-linux-android DISABLE_TESTS=1
-    - env: TARGET=arm-linux-androideabi DISABLE_TESTS=1
-    - env: TARGET=armv7-linux-androideabi DISABLE_TESTS=1
-    - env: TARGET=i686-linux-android DISABLE_TESTS=1
+    - env: TARGET=arm-linux-androideabi DISABLE_TESTS=1 FEATURES=--all-features
+    - env: TARGET=armv7-linux-androideabi DISABLE_TESTS=1 FEATURES=--all-features
+    - env: TARGET=i686-linux-android DISABLE_TESTS=1 FEATURES=--all-features
     #- env: TARGET=x86_64-linux-android DISABLE_TESTS=1
 
     # iOS
@@ -37,11 +37,11 @@ matrix:
       os: osx
 
     # Linux
-    - env: TARGET=aarch64-unknown-linux-gnu
-    - env: TARGET=arm-unknown-linux-gnueabi
-    - env: TARGET=armv7-unknown-linux-gnueabihf
-    - env: TARGET=i686-unknown-linux-gnu
-    - env: TARGET=i686-unknown-linux-musl
+    - env: TARGET=aarch64-unknown-linux-gnu FEATURES=--all-features
+    - env: TARGET=arm-unknown-linux-gnueabi FEATURES=--all-features
+    - env: TARGET=armv7-unknown-linux-gnueabihf FEATURES=--all-features
+    - env: TARGET=i686-unknown-linux-gnu FEATURES=--all-features
+    - env: TARGET=i686-unknown-linux-musl FEATURES=--all-features
     #- env: TARGET=mips-unknown-linux-gnu
     #- env: TARGET=mips64-unknown-linux-gnuabi64
     #- env: TARGET=mips64el-unknown-linux-gnuabi64
@@ -50,26 +50,26 @@ matrix:
     #- env: TARGET=powerpc64-unknown-linux-gnu
     #- env: TARGET=powerpc64le-unknown-linux-gnu
     #- env: TARGET=s390x-unknown-linux-gnu DISABLE_TESTS=1
-    - env: TARGET=x86_64-unknown-linux-gnu
-    - env: TARGET=x86_64-unknown-linux-musl
+    - env: TARGET=x86_64-unknown-linux-gnu FEATURES=--all-features
+    - env: TARGET=x86_64-unknown-linux-musl FEATURES=--all-features
 
     # OSX
     - env: TARGET=i686-apple-darwin
       os: osx
-    - env: TARGET=x86_64-apple-darwin
+    - env: TARGET=x86_64-apple-darwin FEATURES=--all-features
       os: osx
 
     # *BSD
-    - env: TARGET=i686-unknown-freebsd DISABLE_TESTS=1
-    - env: TARGET=x86_64-unknown-freebsd DISABLE_TESTS=1
-    - env: TARGET=x86_64-unknown-netbsd DISABLE_TESTS=1
+    - env: TARGET=i686-unknown-freebsd DISABLE_TESTS=1 FEATURES=--all-features
+    - env: TARGET=x86_64-unknown-freebsd DISABLE_TESTS=1 FEATURES=--all-features
+    - env: TARGET=x86_64-unknown-netbsd DISABLE_TESTS=1 FEATURES=--all-features
 
     # Solaris/illumos
-    - env: TARGET=sparcv9-sun-solaris DISABLE_TESTS=1
-    - env: TARGET=x86_64-sun-solaris DISABLE_TESTS=1
+    - env: TARGET=sparcv9-sun-solaris DISABLE_TESTS=1 FEATURES=--all-features
+    - env: TARGET=x86_64-sun-solaris DISABLE_TESTS=1 FEATURES=--all-features
 
     # Windows
-    - env: TARGET=x86_64-pc-windows-gnu
+    - env: TARGET=x86_64-pc-windows-gnu FEATURES=--all-features
 
     # Bare metal
     # These targets don't support std and as such are likely not suitable for
@@ -80,9 +80,9 @@ matrix:
     # - env: TARGET=thumbv7m-none-eabi
 
     # Testing other channels
-    - env: TARGET=x86_64-unknown-linux-gnu
+    - env: TARGET=x86_64-unknown-linux-gnu FEATURES=--all-features
       rust: nightly
-    - env: TARGET=x86_64-apple-darwin
+    - env: TARGET=x86_64-apple-darwin FEATURES=--all-features
       os: osx
       rust: nightly
 

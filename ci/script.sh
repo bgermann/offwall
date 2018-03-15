@@ -4,15 +4,15 @@ set -ex
 
 # This is the "test phase", tweak it as you see fit
 main() {
-    cross build --target $TARGET --all-features
-    cross build --target $TARGET --all-features --release
+    cross build --target $TARGET $FEATURES
+    cross build --target $TARGET $FEATURES --release
 
     if [ ! -z $DISABLE_TESTS ]; then
         return
     fi
 
-    cross test --target $TARGET --all-features
-    cross test --target $TARGET --all-features --release
+    cross test --target $TARGET $FEATURES
+    cross test --target $TARGET $FEATURES --release
 }
 
 # we don't run the "test phase" when doing deploys
