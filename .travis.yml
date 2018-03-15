@@ -69,7 +69,7 @@ matrix:
     - env: TARGET=x86_64-sun-solaris DISABLE_TESTS=1 FEATURES=--all-features
 
     # Windows
-    - env: TARGET=x86_64-pc-windows-gnu FEATURES=--all-features
+    - env: TARGET=x86_64-pc-windows-gnu
 
     # Bare metal
     # These targets don't support std and as such are likely not suitable for
