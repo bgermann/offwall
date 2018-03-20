@@ -102,8 +102,8 @@ impl Deserialize for OfpErrorMsg {
         let typ = NetworkEndian::read_u16(&bytes[0..2]);
         let code = NetworkEndian::read_u16(&bytes[2..4]);
         Ok(OfpErrorMsg {
-            typ: typ,
-            code: code,
+            typ,
+            code,
             data: bytes[4..].to_vec(),
         })
     }

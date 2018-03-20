@@ -301,12 +301,12 @@ impl<'a> OfController<'a> {
         let stream = Stream::from(connection, stream)?;
 
         let mut ctrl = OfController {
-            table: table,
-            ports: ports,
-            stream: stream,
+            table,
+            ports,
+            stream,
             hello_received: false,
-            records: records,
-            rx: rx,
+            records,
+            rx,
             refresh_timer: Instant::now(),
         };
 

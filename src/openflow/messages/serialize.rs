@@ -21,7 +21,7 @@ impl OfpHeader {
             version: OFP_VERSION,
             typ: typ as u8,
             length: OfpHeader::header_length() as u16,
-            xid: xid,
+            xid,
         }
     }
 
@@ -130,7 +130,7 @@ impl OfpActionOutput {
         OfpActionOutput {
             typ: OfpActionType::Output as u16,
             len: size_of::<OfpActionOutput>() as u16,
-            port: port,
+            port,
             max_len: 0,
             pad: [0; 6],
         }
@@ -151,7 +151,7 @@ impl OfpInstructionActions {
         OfpInstructionActions {
             typ: OfpInstructionType::ApplyActions as u16,
             pad: [0; 4],
-            actions: actions,
+            actions,
         }
     }
 
@@ -181,18 +181,18 @@ impl OfpFlowMod {
         OfpFlowMod {
             cookie: 0,
             cookie_mask: 0,
-            table_id: table_id,
+            table_id,
             command: command as u8,
             idle_timeout: OFP_FLOW_PERMANENT,
             hard_timeout: OFP_FLOW_PERMANENT,
-            priority: priority,
+            priority,
             buffer_id: OFP_NO_BUFFER,
-            out_port: out_port,
+            out_port,
             out_group: OFPP_ANY,
             flags: 0,
             pad: [0; 2],
-            match_field: match_field,
-            instructions: instructions,
+            match_field,
+            instructions,
         }
     }
 }
@@ -205,7 +205,7 @@ pub trait OfpPacket {
             version: OFP_VERSION,
             typ: Self::typ() as u8,
             length: (OfpHeader::header_length() + body_length) as u16,
-            xid: xid,
+            xid,
         }
     }
 
@@ -232,9 +232,7 @@ impl OfpEchoReply {
     /// Constructs a new `OfpEchoReply` with `arbitrary` content.
     /// This should be the same as in the `OfpEchoRequest` that issued this reply.
     pub fn new(arbitrary: Vec<u8>) -> OfpEchoReply {
-        OfpEchoReply {
-            arbitrary: arbitrary,
-        }
+        OfpEchoReply { arbitrary }
     }
 }
 impl OfpPacket for OfpEchoReply {
@@ -310,7 +308,7 @@ mod tests {
             version: 4,
             typ: 3,
             length: 8,
-            xid: xid,
+            xid,
         };
         let testee = OfpEchoReply { arbitrary: vec![] };
         assert_eq!(expected, testee.header(0, xid));
@@ -319,9 +317,7 @@ mod tests {
     #[test]
     fn echo_reply_body_serialization() {
         let arbitrary = vec![1, 2, 3, 4];
-        let testee = OfpEchoReply {
-            arbitrary: arbitrary,
-        };
+        let testee = OfpEchoReply { arbitrary };
         let mut ser = vec![];
         testee.serialize_body(&mut ser).unwrap();
         assert_eq!(vec![1, 2, 3, 4], ser);

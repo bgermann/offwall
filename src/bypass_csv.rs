@@ -199,7 +199,7 @@ impl BypassRecord {
             dst_ip: self.src_ip,
             dst_port: self.src_port,
             proto: self.proto,
-            direction: direction,
+            direction,
         }
     }
 }
@@ -231,10 +231,7 @@ impl CsvParser {
     }
     /// Constructs a new `CsvParser`
     pub fn new(path: String, inside_net: Ipv4Network) -> CsvParser {
-        CsvParser {
-            path: path,
-            inside_net: inside_net,
-        }
+        CsvParser { path, inside_net }
     }
 
     /// Checks for `ip_net` to be in `self.inside_net`
@@ -320,12 +317,12 @@ impl CsvParser {
         };
 
         let rec = BypassRecord {
-            src_ip: src_ip,
-            src_port: src_port,
-            dst_ip: dst_ip,
-            dst_port: dst_port,
-            proto: proto,
-            direction: direction,
+            src_ip,
+            src_port,
+            dst_ip,
+            dst_port,
+            proto,
+            direction,
         };
         let rec_reverse = rec.reverse_direction();
 

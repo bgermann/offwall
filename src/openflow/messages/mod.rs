@@ -300,9 +300,9 @@ impl OfpOxmTlv {
     fn new(field: OxmOfbMatchFields, hasmask: bool, body: Vec<u8>) -> OfpOxmTlv {
         OfpOxmTlv {
             class: OfpOxmClass::OpenflowBasic,
-            hasmask: hasmask,
-            field: field,
-            body: body,
+            hasmask,
+            field,
+            body,
         }
     }
 

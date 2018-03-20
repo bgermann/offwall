@@ -286,7 +286,7 @@ impl FromStr for OfConnection {
             if let Ok(socket) = SocketAddr::from_str(joined) {
                 let connection = OfConnection {
                     proto: ConnectionProtocol::from_str(conn_split[0])?,
-                    socket: socket,
+                    socket,
                     pkcs12: None,
                 };
                 debug!("Got {:?}", connection);
