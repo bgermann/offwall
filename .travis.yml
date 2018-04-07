@@ -62,7 +62,7 @@ matrix:
     # *BSD
     - env: TARGET=i686-unknown-freebsd DISABLE_TESTS=1 FEATURES=--all-features
     - env: TARGET=x86_64-unknown-freebsd DISABLE_TESTS=1 FEATURES=--all-features
-    - env: TARGET=x86_64-unknown-netbsd DISABLE_TESTS=1 FEATURES=--all-features
+    #- env: TARGET=x86_64-unknown-netbsd DISABLE_TESTS=1 FEATURES=--all-features
 
     # Solaris/illumos
     - env: TARGET=sparcv9-sun-solaris DISABLE_TESTS=1 FEATURES=--all-features
