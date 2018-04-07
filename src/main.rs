@@ -20,7 +20,6 @@ extern crate ini;
 extern crate ipnetwork;
 #[macro_use]
 extern crate log;
-extern crate log_panics;
 extern crate notify;
 extern crate rand;
 extern crate simple_logger;
@@ -31,6 +30,8 @@ extern crate tls_api_openssl;
 
 #[cfg(unix)]
 extern crate libc;
+#[cfg(unix)]
+extern crate log_panics;
 #[cfg(unix)]
 extern crate syslog;
 
@@ -73,19 +74,20 @@ fn handle_cli_args() -> io::Result<()> {
     let matches = app_from_crate!().args_from_usage(usage).get_matches();
 
     let log_lvl = match matches.occurrences_of("v") {
-        0 => log::LogLevel::Error,
-        1 => log::LogLevel::Warn,
-        2 => log::LogLevel::Info,
-        3 => log::LogLevel::Debug,
-        _ => log::LogLevel::Trace,
+        0 => log::Level::Error,
+        1 => log::Level::Warn,
+        2 => log::Level::Info,
+        3 => log::Level::Debug,
+        _ => log::Level::Trace,
     };
 
     if matches.is_present("syslog") {
         let app_name = Some(crate_name!());
-        let filter = log_lvl.to_log_level_filter();
+        let filter = log_lvl.to_level_filter();
         #[cfg(unix)]
         syslog::init(syslog::Facility::LOG_USER, filter, app_name)
             .expect("error on logging initialization");
+        #[cfg(unix)]
         log_panics::init();
     }
     else {
