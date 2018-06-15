@@ -111,12 +111,12 @@ fn handle_cli_args() -> io::Result<()> {
                 return Err(io::Error::last_os_error());
             }
             else if pid > 0 {
+                let pid_path = matches.value_of("pid").unwrap();
+                let mut file = File::create(pid_path)?;
+                write!(file, "{}", pid)?;
                 // exit the parent process
                 exit(0);
             }
-            let pid_path = matches.value_of("pid").unwrap();
-            let mut file = File::create(pid_path)?;
-            write!(file, "{}", pid)?;
         }
     }
 
