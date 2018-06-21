@@ -25,7 +25,7 @@ cross is installed via `cargo install cross`.
 ## Packaging for Solaris 10
 
 It is assumed that you have cross installed and the docker daemon is running.
-[The Heirloom Packaging Tools}(http://heirloom.sourceforge.net/pkgtools.html)
+[The Heirloom Packaging Tools](http://heirloom.sourceforge.net/pkgtools.html)
 and a make implementation are also required.
 At least make, pkgmk, rustup, docker and cross have to be in $PATH.
 Build the Solaris 10 SVR4 package by simply running `make`.
