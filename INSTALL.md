@@ -1,7 +1,7 @@
 # Building OFFWall
 
 OFFWall is provided by the cargo crate offwall.
-Rust version 1.22.0 is minimally required to build it.
+Rust version 1.26.0 is minimally required to build it.
 Building the crate on a system that has rustc and cargo available is as easy as `cargo build`.
 Installing to the local cargo path takes a `cargo install`.
 
