@@ -41,8 +41,6 @@ matrix:
 
     # Windows
     - env: TARGET=x86_64-pc-windows-gnu
-    - env: TARGET=x86_64-pc-windows-msvc DISABLE_TESTS=1
-      os: windows
 
 install:
   - cargo install cross || true
