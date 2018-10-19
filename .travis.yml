@@ -49,7 +49,7 @@ before_install:
   - rustup self update
 
 install:
-  - cargo install cross
+  - cargo install cross || true
   - source ~/.cargo/env || true
 
 script:
