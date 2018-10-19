@@ -49,8 +49,8 @@ install:
 script:
   - cross build --target $TARGET $FEATURES
   - cross build --target $TARGET $FEATURES --release
-  - if: env(DISABLE_TESTS) != 1
-    cross test --target $TARGET $FEATURES
+#  - if: env(DISABLE_TESTS) != 1
+#    cross test --target $TARGET $FEATURES
 
 cache: cargo
 before_cache:
