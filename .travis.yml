@@ -44,16 +44,15 @@ matrix:
     - env: TARGET=x86_64-pc-windows-msvc DISABLE_TESTS=1
       os: windows
 
-before_install:
-  - set -e
-  - rustup self update
-
 install:
   - cargo install cross || true
   - source ~/.cargo/env || true
 
 script:
-  - bash ci/script.sh
+  - cross build --target $TARGET $FEATURES
+  - cross build --target $TARGET $FEATURES --release
+  - if: env(DISABLE_TESTS) != 1
+    cross test --target $TARGET $FEATURES
 
 cache: cargo
 before_cache:
