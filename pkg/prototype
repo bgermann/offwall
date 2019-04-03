@@ -1,6 +1,6 @@
 i pkginfo
 i depend
-i copyright=../LICENSE.md
+i copyright=../LICENSE
 !default 0755 root sys
 d none /etc
 d none /opt

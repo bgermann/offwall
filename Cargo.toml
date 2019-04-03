@@ -1,8 +1,8 @@
 [package]
 name = "offwall"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["Bastian Germann"]
-license = "GPL-3.0+"
+license = "X11"
 repository = "https://github.com/bgermann/offwall"
 documentation = "https://docs.rs/crate/offwall"
 readme = "README.md"
@@ -14,11 +14,11 @@ tls = ["tls-api-openssl"]
 [dependencies]
 byteorder = "1.1"
 notify = "4.0"
-ipnetwork = "0.13"
+ipnetwork = "0.14"
 log = "0.4"
-simple_logger = "0.5"
-rust-ini = "0.12"
-rand = "0.5"
+simple_logger = "1.0"
+rust-ini = "0.13"
+rand = "0.6"
 tls-api = "0.1"
 tls-api-openssl = { version = "0.1", optional = true }
 
