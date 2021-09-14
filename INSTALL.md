@@ -34,9 +34,7 @@ You can `make offwall.pkg` a container with pkgtrans available.
 
 ## Installing on Solaris 10
 
-You can download Solaris SVR4 packages from
-[GitHub Releases](https://github.com/bgermann/offwall/releases) and install them with pkgadd.
-If you build the package yourself, possibly you get a checksum error
+When you build the Solaris SVR4 package and install it via pkgadd, possibly you get a checksum error
 because the upstream Heirloom Packaging Tools depend on a long's size
 being 32 bit for computing the checksums. You should install a 32-bit version.
 If that is not possible, pkgadd has an undocumented -C flag to deactivate checksum checks.
